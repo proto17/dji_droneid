@@ -165,21 +165,32 @@ occupied_carriers = 600;
 data_carriers_left = (fft_size/2)-(occupied_carriers/2)+1:fft_size/2;
 data_carriers_right = (fft_size/2)+2:fft_size/2+(occupied_carriers/2)+1;
 
+% Place to store the data carrier samples
 data_carriers = zeros(7, occupied_carriers);
 
+% Plot and extract the data carriers from the 7 data carrying OFDM symbols
 figure(6);
 output_idx = 1;
+
+% Symbols 4 and 6 are ZC sequences and do not contain data
 for idx=[1,2,3,5,7,8,9]
     subplot(3, 3, idx);
+
+    % Get all of the freq domain samples for the current symbol, extract
+    % out just the data carriers, and plot
     carriers = symbols_freq_domain(idx,:);
     data_carriers(output_idx,:) = carriers([data_carriers_left, data_carriers_right]);
     plot(squeeze(data_carriers(output_idx,:)), 'o');
     output_idx = output_idx + 1;
 end
 
+% Plot the data carriers as one constellation (first one with lines, second
+% with dots)
 figure(7);
 subplot(1, 2, 1);
 plot(squeeze(data_carriers));
 subplot(1, 2, 2);
 plot(squeeze(data_carriers), 'o');
 
+% Demodulate the QPSK and assume it's gray coded
+demodulated_bits = pskdemod(data_carriers, 2, 0, 'gray');
