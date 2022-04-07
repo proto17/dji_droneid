@@ -2,6 +2,9 @@
 
 *THIS IS A WORK IN PROGRESS!!!*
 
+![Alt text](Octave.png?raw=true)
+
+
 This project aims to demodulate DJI DroneID frames and eventually be able to craft arbitrary DroneID frames that can be sent with an SDR
 
 The `.m` files in this project *should* work with Octave 5.2.0 and MATLAB.  If using Octave, make sure to install the `signal` package
