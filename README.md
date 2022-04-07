@@ -6,6 +6,8 @@ This project aims to demodulate DJI DroneID frames and eventually be able to cra
 
 The `.m` files in this project *should* work with Octave 5.2.0 and MATLAB
 
+The IQ file used in this example will not be made available publicly as it likely contains GPS information about where the drone was when the recording was taken.  The drone used in testing is the DJI Mini 2 with no modifications.  Recordings were taken with an Ettus B205-mini at a sampling rate of 30.72 MSPS.  The signal of interest is in 2.4 GHz and will show up every 600 ms or so.  It will be 10 MHz wide (15.56 MHz with guard carriers).  
+
 List of tasks:
  - Identify ZC sequence
  - Detect ZC sequence (done)
