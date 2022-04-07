@@ -151,3 +151,35 @@ for idx=1:9
     plot(symbols_freq_domain(idx,:), 'o');
 end
 title('Constellations (Pre Freq Correction)')
+
+%% Demodulation
+
+% The spec says that the 15.36 MHz signal has 601 occupied carriers, but
+% one of those is DC which doesn't appear to be used
+% NOTE: I have seen someone saying that there is a specific phase present
+% in some of the DC.  Not sure if this is correct, so for now assuming that
+% the DC carrier is not used
+occupied_carriers = 600;
+
+% Create a list of data carrier indices
+data_carriers_left = (fft_size/2)-(occupied_carriers/2)+1:fft_size/2;
+data_carriers_right = (fft_size/2)+2:fft_size/2+(occupied_carriers/2)+1;
+
+data_carriers = zeros(7, occupied_carriers);
+
+figure(6);
+output_idx = 1;
+for idx=[1,2,3,5,7,8,9]
+    subplot(3, 3, idx);
+    carriers = symbols_freq_domain(idx,:);
+    data_carriers(output_idx,:) = carriers([data_carriers_left, data_carriers_right]);
+    plot(squeeze(data_carriers(output_idx,:)), 'o');
+    output_idx = output_idx + 1;
+end
+
+figure(7);
+subplot(1, 2, 1);
+plot(squeeze(data_carriers));
+subplot(1, 2, 2);
+plot(squeeze(data_carriers), 'o');
+
