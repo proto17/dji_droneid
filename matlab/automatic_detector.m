@@ -123,20 +123,28 @@ symbols_freq_domain = zeros(9, fft_size);
 
 sample_offset = 1;
 for symbol_idx=1:9
+    % OFDM symbols 1 and 9 have a long cyclic prefix
     if (symbol_idx == 1 || symbol_idx == 9)
         cyclic_prefix_len = long_cp_len;
     else
         cyclic_prefix_len = short_cp_len;
     end
     
+    % Skip the cyclic prefix
     sample_offset = sample_offset + cyclic_prefix_len;
+
+    % Extract out just the OFDM symbol ignoring the cyclic prefix
     symbol = samples(sample_offset:sample_offset + fft_size - 1);
+
+    % Save off the original time domain and the FFT'd samples
     symbols_time_domain(symbol_idx,:) = symbol;
     symbols_freq_domain(symbol_idx,:) = fftshift(fft(symbol));
 
+    % Skip the OFDM symbol just extracted
     sample_offset = sample_offset + fft_size;
 end
 
+% Plot the constellation diagrams for all extracted OFDM symbols
 figure(5)
 for idx=1:9
     subplot(3, 3, idx);
