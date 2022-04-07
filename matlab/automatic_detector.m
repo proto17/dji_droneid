@@ -46,8 +46,8 @@ interpolated_samples(1:interpolation:end) = samples;
 interpolated_samples = lowpass(interpolated_samples, signal_bandwidth/2, sample_rate * interpolation);
 
 interpolated_fft_size = sample_rate * interpolation / carrier_spacing;
-interpolated_long_cp = round(0.0000052 * sample_rate * interpolation);
-interpolated_short_cp = round(0.00000469 * sample_rate * interpolation);
+interpolated_long_cp = round(1/192000 * sample_rate * interpolation);
+interpolated_short_cp = round(0.0000046875 * sample_rate * interpolation);
 
 figure(2);
 plot(10 * log10(abs(fftshift(fft(interpolated_samples)))));
@@ -68,11 +68,6 @@ end
 % cyclic prefix, and 3 FFT sizes
 start_offset = index - (((interpolated_short_cp + interpolated_fft_size) * 2) + ...
     interpolated_long_cp + interpolated_fft_size);
-
-% TODO(7Apr2022): For some reason the starting sample is off by one.  Not
-% sure if this is just an indexing issue, or something is wrong in the
-% offset finding logic
-start_offset = start_offset - 1;
 
 % The signal is already filtered, so just throw away every N samples to
 % decimate down to critical rate
@@ -141,8 +136,9 @@ title('OFDM Symbol Boundaries')
 %% Coarse frequency adjustment
 
 [offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
-% exp(1j * 2* pi / sample_rate * (0:length(samples)-1) * rough_frequency_offset);
-% samples = samples .* exp(1j * 2 * pi * offset_est * (0:length(samples)-1));
+offset_freq = .180e3;
+offset_adj = offset_freq / critial_sample_rate;
+samples = samples .* exp(1j * 2 * pi * -offset_adj * (0:length(samples)-1));
 
 %% Symbol extraction
 
@@ -172,18 +168,10 @@ for idx=1:9
 end
 title('Constellations (Pre Freq Correction)')
 
-
-
-figure(5)
-for idx=1:9
-    subplot(3, 3, idx);
-    plot(symbols_freq_domain(idx,:), 'o');
-end
-title('Constellations (Pre Freq Correction)')
-
 function [freq_offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len)
     sample_offset = 1;
     scores = zeros(9, 1);
+    figure(10);
     for idx=1:9
         if (idx == 1 || idx == 9)
             cp_len = long_cp_len;
@@ -193,7 +181,12 @@ function [freq_offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp
 
         cyclic_prefix = samples(sample_offset:sample_offset + cp_len - 1);
         end_of_symbol = samples(sample_offset+fft_size:sample_offset+fft_size+cp_len - 1);
-        scores(idx) = angle(xcorr(cyclic_prefix, end_of_symbol, 0)) / (fft_size + cp_len);
+        
+        plot(abs(cyclic_prefix).^2);
+        hold on;
+        plot(abs(end_of_symbol).^2);
+        hold off;
+        scores(idx) = xcorr(cyclic_prefix, end_of_symbol, 0);
 
         sample_offset = sample_offset + fft_size + cp_len;
     end
