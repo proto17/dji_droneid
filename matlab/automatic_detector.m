@@ -43,8 +43,16 @@ samples = samples .* rotation_vector;
 interpolation = 2;
 interpolated_samples = zeros(1, length(samples) * interpolation);
 interpolated_samples(1:interpolation:end) = samples;
-interpolated_samples = lowpass(interpolated_samples, signal_bandwidth/2, sample_rate * interpolation);
 
+% Define the interpolation filter.  The passband is 1/2 of the bandwidth
+% (there are plenty of guard carriers to cover the stop-band).  Allowing
+% for 400 KHz of stop-band.  Using 200 taps as that seems to work well
+passband_edge = signal_bandwidth/2;
+stopband_edge = signal_bandwidth/2 + 400e3;
+filter_taps = fir1(200, signal_bandwidth/2/sample_rate*interpolation/2);
+interpolated_samples = filter(filter_taps, 1, interpolated_samples);
+
+% Calculate new rate dependant variables
 interpolated_fft_size = sample_rate * interpolation / carrier_spacing;
 interpolated_long_cp = round(1/192000 * sample_rate * interpolation);
 interpolated_short_cp = round(0.0000046875 * sample_rate * interpolation);
@@ -102,8 +110,8 @@ face_opacity = 0.25;
 edge_color = [0, 0, 0, 0];
 
 % Define the box colors (with transparency)
-face_color_red   = [1, 0, 0, face_opacity];
-face_color_green = [0, 1, 0, face_opacity];
+face_color_red   = [1, 0, 0];
+face_color_green = [0, 1, 0];
 
 % The Y axis of the plot is in dB, so draw a box that starts at -30 dB and
 % goes up by 25 dB (-5 dB).  These numbers just happened to work out with
@@ -113,9 +121,12 @@ box_y_height = 25;
 
 % Draw the first rectangle over the only symbol that uses a long cyclic
 % prefix
-rectangle('Position', [1, box_y_start, fft_size + long_cp_len, box_y_height], ...
-          'FaceColor', face_color_red, ...
-          'EdgeColor', edge_color);
+r = rectangle('Position', [1, box_y_start, fft_size + long_cp_len, box_y_height]);
+set(r, "FaceColor", face_color_red);
+set(get(r, 'children'), "FaceAlpha", face_opacity);
+% rectangle('Position', [1, box_y_start, fft_size + long_cp_len, box_y_height], ...
+%           'FaceColor', face_color_red, ...
+%           'EdgeColor', edge_color);
 
 % Draw the remaining boxes over the OFDM symbols that use the short cyclic
 % prefix, alternating between colors
@@ -127,18 +138,25 @@ for symbol_idx=1:8
     end
 
     relative_offset = symbol_idx * (fft_size + short_cp_len);
-    rectangle('Position', [1 + relative_offset, box_y_start, fft_size + short_cp_len, box_y_height], ...
-              'FaceColor', color, ...
-              'EdgeColor', edge_color);
+    r = rectangle('Position', [1 + relative_offset, box_y_start, fft_size + short_cp_len, box_y_height]);
+    set(r, "FaceColor", color);
+    set(get(r, 'children'), "facealpha", face_opacity);
+%               'FaceColor', color, ...
+%               'EdgeColor', edge_color);
 end
 title('OFDM Symbol Boundaries')
 
 %% Coarse frequency adjustment
+offset_freq = -.156e3;
+offset_adj = offset_freq / critial_sample_rate;
+% samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
 
 [offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
-offset_freq = .180e3;
-offset_adj = offset_freq / critial_sample_rate;
-samples = samples .* exp(1j * 2 * pi * -offset_adj * (0:length(samples)-1));
+offset_est * critial_sample_rate
+
+% offset_freq = .156e3;
+% offset_adj = offset_freq / critial_sample_rate;
+samples = samples .* exp(1j * 2 * pi * offset_est * 9 * (0:length(samples)-1));
 
 %% Symbol extraction
 
@@ -167,29 +185,3 @@ for idx=1:9
     plot(symbols_freq_domain(idx,:), 'o');
 end
 title('Constellations (Pre Freq Correction)')
-
-function [freq_offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len)
-    sample_offset = 1;
-    scores = zeros(9, 1);
-    figure(10);
-    for idx=1:9
-        if (idx == 1 || idx == 9)
-            cp_len = long_cp_len;
-        else
-            cp_len = short_cp_len;
-        end
-
-        cyclic_prefix = samples(sample_offset:sample_offset + cp_len - 1);
-        end_of_symbol = samples(sample_offset+fft_size:sample_offset+fft_size+cp_len - 1);
-        
-        plot(abs(cyclic_prefix).^2);
-        hold on;
-        plot(abs(end_of_symbol).^2);
-        hold off;
-        scores(idx) = xcorr(cyclic_prefix, end_of_symbol, 0);
-
-        sample_offset = sample_offset + fft_size + cp_len;
-    end
-
-    freq_offset_est = sum(scores) / length(scores);
-end
