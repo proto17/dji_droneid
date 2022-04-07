@@ -35,6 +35,6 @@ function [scores] = find_zc(samples, sample_rate)
         
         % Run a normalized cross correlation with no lag (just do one
         % xcorr)
-        scores(start_offset) = xcorr(window_one, window_two, 0, 'normalized');
+        scores(start_offset) = normalized_xcorr(window_one, window_two);
     end
 end
