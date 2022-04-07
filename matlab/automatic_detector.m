@@ -194,3 +194,6 @@ plot(squeeze(data_carriers), 'o');
 
 % Demodulate the QPSK and assume it's gray coded
 demodulated_bits = pskdemod(data_carriers, 2, 0, 'gray');
+
+%% Descrambler
+% Oof... this part's gonna be interesting
