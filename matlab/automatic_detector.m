@@ -49,7 +49,7 @@ interpolated_fft_size = sample_rate * interpolation / carrier_spacing;
 interpolated_long_cp = round(0.0000052 * sample_rate * interpolation);
 interpolated_short_cp = round(0.00000469 * sample_rate * interpolation);
 
-figure(765);
+figure(2);
 plot(10 * log10(abs(fftshift(fft(interpolated_samples)))));
 title('Interpolated Rate')
 
@@ -69,12 +69,17 @@ end
 start_offset = index - (((interpolated_short_cp + interpolated_fft_size) * 2) + ...
     interpolated_long_cp + interpolated_fft_size);
 
+% TODO(7Apr2022): For some reason the starting sample is off by one.  Not
+% sure if this is just an indexing issue, or something is wrong in the
+% offset finding logic
+start_offset = start_offset - 1;
+
 % The signal is already filtered, so just throw away every N samples to
 % decimate down to critical rate
 decimation_rate = interpolation * (sample_rate / critial_sample_rate);
 samples = interpolated_samples(start_offset:decimation_rate:end);
 
-figure(766);
+figure(3);
 plot(10 * log10(abs(fftshift(fft(samples)))));
 title('Critical Rate')
 
@@ -92,7 +97,7 @@ true_start_index = round(start_offset/decimation_rate);
 %  the time alignment is correct (starting at the right sample)
 
 % Plot the time domain
-figure(3);
+figure(4);
 plot(10 * log10(abs(samples)));
 
 % Tranceparency of each box (so the waveform is still visible)
@@ -130,4 +135,68 @@ for symbol_idx=1:8
     rectangle('Position', [1 + relative_offset, box_y_start, fft_size + short_cp_len, box_y_height], ...
               'FaceColor', color, ...
               'EdgeColor', edge_color);
+end
+title('OFDM Symbol Boundaries')
+
+%% Coarse frequency adjustment
+
+[offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
+% exp(1j * 2* pi / sample_rate * (0:length(samples)-1) * rough_frequency_offset);
+% samples = samples .* exp(1j * 2 * pi * offset_est * (0:length(samples)-1));
+
+%% Symbol extraction
+
+symbols_time_domain = zeros(9, fft_size);
+symbols_freq_domain = zeros(9, fft_size);
+
+sample_offset = 1;
+for symbol_idx=1:9
+    if (symbol_idx == 1 || symbol_idx == 9)
+        cyclic_prefix_len = long_cp_len;
+    else
+        cyclic_prefix_len = short_cp_len;
+    end
+    
+    sample_offset = sample_offset + cyclic_prefix_len;
+    symbol = samples(sample_offset:sample_offset + fft_size - 1);
+    symbols_time_domain(symbol_idx,:) = symbol;
+    symbols_freq_domain(symbol_idx,:) = fftshift(fft(symbol));
+
+    sample_offset = sample_offset + fft_size;
+end
+
+figure(5)
+for idx=1:9
+    subplot(3, 3, idx);
+    plot(symbols_freq_domain(idx,:), 'o');
+end
+title('Constellations (Pre Freq Correction)')
+
+
+
+figure(5)
+for idx=1:9
+    subplot(3, 3, idx);
+    plot(symbols_freq_domain(idx,:), 'o');
+end
+title('Constellations (Pre Freq Correction)')
+
+function [freq_offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len)
+    sample_offset = 1;
+    scores = zeros(9, 1);
+    for idx=1:9
+        if (idx == 1 || idx == 9)
+            cp_len = long_cp_len;
+        else
+            cp_len = short_cp_len;
+        end
+
+        cyclic_prefix = samples(sample_offset:sample_offset + cp_len - 1);
+        end_of_symbol = samples(sample_offset+fft_size:sample_offset+fft_size+cp_len - 1);
+        scores(idx) = angle(xcorr(cyclic_prefix, end_of_symbol, 0)) / (fft_size + cp_len);
+
+        sample_offset = sample_offset + fft_size + cp_len;
+    end
+
+    freq_offset_est = sum(scores) / length(scores);
 end
