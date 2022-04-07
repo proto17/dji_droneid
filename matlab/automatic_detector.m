@@ -98,53 +98,7 @@ true_start_index = round(start_offset/decimation_rate);
 %  over a time domain view of the burst.  It alternates between red and
 %  green transparent rectangles over the time domain as a sanity check that
 %  the time alignment is correct (starting at the right sample)
-
-% Plot the time domain
-figure(4);
-plot(10 * log10(abs(samples)));
-
-% Tranceparency of each box (so the waveform is still visible)
-face_opacity = 0.25;
-
-% Don't show the lines between the boxes.  Just gets in the way
-edge_color = [0, 0, 0, 0];
-
-% Define the box colors (with transparency)
-face_color_red   = [1, 0, 0];
-face_color_green = [0, 1, 0];
-
-% The Y axis of the plot is in dB, so draw a box that starts at -30 dB and
-% goes up by 25 dB (-5 dB).  These numbers just happened to work out with
-% the test data and will likely change for other collects
-box_y_start = -30;
-box_y_height = 25;
-
-% Draw the first rectangle over the only symbol that uses a long cyclic
-% prefix
-r = rectangle('Position', [1, box_y_start, fft_size + long_cp_len, box_y_height]);
-set(r, "FaceColor", face_color_red);
-set(get(r, 'children'), "FaceAlpha", face_opacity);
-% rectangle('Position', [1, box_y_start, fft_size + long_cp_len, box_y_height], ...
-%           'FaceColor', face_color_red, ...
-%           'EdgeColor', edge_color);
-
-% Draw the remaining boxes over the OFDM symbols that use the short cyclic
-% prefix, alternating between colors
-for symbol_idx=1:8
-    if (mod(symbol_idx, 2) == 0)
-        color = face_color_red;
-    else
-        color = face_color_green;
-    end
-
-    relative_offset = symbol_idx * (fft_size + short_cp_len);
-    r = rectangle('Position', [1 + relative_offset, box_y_start, fft_size + short_cp_len, box_y_height]);
-    set(r, "FaceColor", color);
-    set(get(r, 'children'), "facealpha", face_opacity);
-%               'FaceColor', color, ...
-%               'EdgeColor', edge_color);
-end
-title('OFDM Symbol Boundaries')
+plot_symbol_boundaries(samples, critial_sample_rate, 4);
 
 %% Coarse frequency adjustment
 offset_freq = -.156e3;
