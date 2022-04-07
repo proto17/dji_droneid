@@ -24,7 +24,5 @@ function [freq_offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp
         sample_offset = sample_offset + fft_size + cp_len;
     end
 
-    scores * 15.36e6 / fft_size
-
     freq_offset_est = sum(scores) / length(scores) / fft_size;
 end
