@@ -28,6 +28,10 @@ title('Original Samples')
 rotation_vector = exp(1j * 2* pi / sample_rate * (0:length(samples)-1) * rough_frequency_offset);
 samples = samples .* rotation_vector;
 
+figure(1000);
+plot(10 * log10(abs(fftshift(fft(samples)))));
+title('Original Samples - Freq Shifted')
+
 %% Interpolate the signal
 %  The reason for interpolation is that it makes finding the correct
 %  starting sample index more accurate.  The starting offset needs to be
