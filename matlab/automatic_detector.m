@@ -174,6 +174,23 @@ occupied_carriers = 600;
 data_carriers_left = (fft_size/2)-(occupied_carriers/2)+1:fft_size/2;
 data_carriers_right = (fft_size/2)+2:fft_size/2+(occupied_carriers/2)+1;
 
+% Below is logic to write the received ZC sequence out to a file.  It is meant to be used with the
+% brute_force_zc.m script
+%
+% % figure(1000); plot(abs(symbols_time_domain(4,:)).^2);
+% file_handle = fopen('/opt/dji/collects/zc_symbol_4_15360KSPS_time_domain.fc32', 'w');
+% zc_samples = symbols_freq_domain(4, [data_carriers_left, data_carriers_right]);
+% reals = reshape([real(zc_samples); imag(zc_samples)], [], 1);
+% fwrite(file_handle, reals, 'single');
+% fclose(file_handle);
+% 
+% % figure(1000); plot(abs(symbols_time_domain(6,:)).^2);
+% file_handle = fopen('/opt/dji/collects/zc_symbol_6_15360KSPS_time_domain.fc32', 'w');
+% zc_samples = symbols_freq_domain(6, [data_carriers_left, data_carriers_right]);
+% reals = reshape([real(zc_samples); imag(zc_samples)], [], 1);
+% fwrite(file_handle, reals, 'single');
+% fclose(file_handle);
+
 % Place to store the data carrier samples
 data_carriers = zeros(7, occupied_carriers);
 
