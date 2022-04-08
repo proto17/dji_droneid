@@ -197,8 +197,46 @@ plot(squeeze(data_carriers));
 subplot(1, 2, 2);
 plot(squeeze(data_carriers), 'o');
 
-% Demodulate the QPSK and assume it's gray coded
-demodulated_bits = pskdemod(data_carriers, 2, 0, 'gray');
+%% Below is a brute force attempt at trying to get the first data symbol to drop out as all 0's or 1's
 
-%% Descrambler
-% Oof... this part's gonna be interesting
+% Initializing to 0x12345678
+scrambler_x2_init = [0 0 1, 0 0 1 0, 0 0 1 1, 0 1 0 0, 0 1 0 1, 0 1 1 0, 0 1 1 1, 1 0 0 0];
+
+% Generate enough random for one OFDM symbol (need two bits per data carrier since there are 2 bits per sample)
+scrambler_bit_count = length(data_carriers) * 2;
+
+% Try out 4 possibilities for the scrambler.  It's unclear if the order of the initialization vector
+% is correct, nor if the output of the scrambler needs to be reversed before getting applied.  So, try
+% all 4 combos
+scrambler_perms = [...
+    generate_scrambler_seq(scrambler_bit_count, scrambler_x2_init);
+    generate_scrambler_seq(scrambler_bit_count, fliplr(scrambler_x2_init));
+    fliplr(generate_scrambler_seq(scrambler_bit_count, scrambler_x2_init));
+    fliplr(generate_scrambler_seq(scrambler_bit_count, fliplr(scrambler_x2_init)));
+];
+
+% Number of bits to XOR and show in the terminal
+xor_window = 64;
+
+% Loop over the data carriers 4 times, each time rotating the constellation by 90 degrees
+% This is a brute force approach to finding the correct phase offset since it's unknown due
+% to not having a known training sequence
+for idx=0:3
+    % Rotate all samples by 90 degrees
+    offset = pi / 2;
+    data_carriers = data_carriers .* exp(1j * offset);
+
+    % The constellations are setup with points at (1,1), (-1,1), (-1,-1), and (1,-1) which 
+    % for MATLAB is a pi/4 QPSK.
+    % Using Gray coding as it's the most likely coding (but I don't know if that's true for LTE)
+    demodulated_bits = pskdemod(data_carriers, 4, pi/4, 'gray', ...
+        'OutputType', 'bit', 'PlotConstellation', false);
+    
+    % Try all 4 scrambler possibilities
+    xor_out = [
+        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(1,1:xor_window))); 
+        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(2,1:xor_window)));
+        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(3,1:xor_window))); 
+        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(4,1:xor_window)));
+    ]
+end
