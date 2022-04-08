@@ -105,20 +105,21 @@ true_start_index = round(start_offset/decimation_rate);
 plot_symbol_boundaries(samples, critial_sample_rate, 4);
 
 %% Coarse frequency adjustment
-offset_freq = -.156e3;
-offset_adj = offset_freq / critial_sample_rate;
-% samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
 
-[offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
+% My CFO detection isn't working, so rotate the constellation by hand (just eyeballing the constellation plots)
+offset_adj = -1.015625e-05;
+samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
+
+% [offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
 
 % DANGER: I have no idea why this is necessary or why it's equal to the
 % number of OFDM symbols, but here it is.  It's likely that my CFO
 % estimation logic is bad.  But, this works for the moment, and temporary
 % fixes are never actually kept around in code forever...
-offset_est = offset_est * 9;
+% offset_est = offset_est * 9;
 
 % Apply the offset correction
-samples = samples .* exp(1j * 2 * pi * offset_est * (0:length(samples)-1));
+% samples = samples .* exp(1j * 2 * pi * offset_est * (0:length(samples)-1));
 
 %% Symbol extraction
 
