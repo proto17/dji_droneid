@@ -83,3 +83,5 @@ As mentioned above, there are 9 OFDM symbols.
 The 4th and 6th symbols (1-based) appear to be Zadoff-Chu (ZC) sequences (these are used in LTE and I know for a fact they are present in the uplink signal for Ocusync).  The parameters for the ZC sequences are not known.  I have first hand knowledge that the sequences are almost certainly not following the standard.
 The remaining OFDM symbols carry just a QPSK.  If there are pilots they are either QPSK pilots or a 45 degree offset BPSK.  As pointed out by https://github.com/tmbinc/random/tree/master/dji/ocusync2 the DC carrier appears to always be sitting around 45 degrees with a much smaller amplitude than the data carriers.  Not totally sure what's going on there.
 
+## Open Source LTE Libs
+I have had zero luck with my few attempts at getting open source LTE tools to understand what the DJI Mini 2 is sending out.  My hunch is that this is due to DJI not following the standard to the letter.  But, I know exceedingly little about LTE, so take that for what it's worth.
