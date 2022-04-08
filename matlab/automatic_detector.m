@@ -1,17 +1,17 @@
 clear all
 
 %% Signal parameters
-file_path = '/opt/dji/collects/5782GHz_30720KSPS.fc32';
+file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
 sample_rate = 30.72e6;          % Collected 2x oversampled
 critial_sample_rate = 15.36e6;  % The actual sample rate for this signal
 carrier_spacing = 15e3;         % Per the LTE spec
 signal_bandwidth = 10e6;        % Per the LTE spec
-rough_frequency_offset = 5.5e6; % The collected signal is 5.5 MHz off center
+rough_frequency_offset = 7.5e6; % The collected signal is 5.5 MHz off center
 
 
 %% Read in the IQ samples for a single burst
 %  The burst is found using baudline and its cursor/delta time measurements
-file_start_time = 6.507678;
+file_start_time = 0.802225;
 file_start_sample_idx = uint64(file_start_time * sample_rate);
 
 burst_duration_time = 0.000721;
@@ -107,7 +107,7 @@ plot_symbol_boundaries(samples, critial_sample_rate, 4);
 %% Coarse frequency adjustment
 
 % My CFO detection isn't working, so rotate the constellation by hand (just eyeballing the constellation plots)
-offset_adj = -1.015625e-05;
+offset_adj = 0;
 samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
 
 % [offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
@@ -120,6 +120,10 @@ samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
 
 % Apply the offset correction
 % samples = samples .* exp(1j * 2 * pi * offset_est * (0:length(samples)-1));
+
+%% Phase adjustment
+phase_offset = deg2rad(15);
+samples = samples * exp(1j * 2 * phase_offset);
 
 %% Symbol extraction
 
