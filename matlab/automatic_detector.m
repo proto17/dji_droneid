@@ -233,8 +233,18 @@ for idx=0:3
     % The constellations are setup with points at (1,1), (-1,1), (-1,-1), and (1,-1) which 
     % for MATLAB is a pi/4 QPSK.
     % Using Gray coding as it's the most likely coding (but I don't know if that's true for LTE)
+    
+    % WARNING: This logic will explode in Octave.  Octave outputs symbols, not bits.  So a demapping is
+    %          needed.  Example: `demodulated_bits` will have something like [1, 0, 3, 2, 2,...]
+    %          But in MATLAB it's all binary (gets unpacked automatically)
+    %          I'll have to poke around to figure out a way to make MATLAB and Octave match here
     demodulated_bits = pskdemod(data_carriers, 4, pi/4, 'gray', ...
         'OutputType', 'bit', 'PlotConstellation', false);
+
+    if (exist('OCTAVE_VERSION', 'builtin'))
+        % TODO(8April2022): Find a way to demap in Octave that matches MATLAB
+        warning("The output you are about to see is packed symbols.  The key add is going to be wrong!")
+    end
     
     % Try all 4 scrambler possibilities
     xor_out = [
