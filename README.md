@@ -1,4 +1,4 @@
-# dji_droneid
+# DJI DroneID RF Analysis
 
 *THIS IS A WORK IN PROGRESS!!!*
 
