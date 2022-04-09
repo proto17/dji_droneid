@@ -32,70 +32,51 @@ figure(1000);
 plot(10 * log10(abs(fftshift(fft(samples)))));
 title('Original Samples - Freq Shifted')
 
-%% Interpolate the signal
-%  The reason for interpolation is that it makes finding the correct
-%  starting sample index more accurate.  The starting offset needs to be
-%  very, very close so that pilots aren't needed.  A time offset results in
-%  a walking phase offset after the FFT which is hard to remove without
-%  pilots.  The higher the interpolation factor the better for getting the
-%  correct offset, but that adds to computation time and memory use
+orig_fft_size = sample_rate / carrier_spacing;
+orig_long_cp_len = round(1/192000 * sample_rate);
+orig_short_cp_len = round(0.0000046875 * sample_rate);
 
-% Keep in mind that the signal may already be interpolated (ie not
-% critically sampled) at this point.  If the signal was recorded 2x
-% oversampled, then an interpolation of 2 here means that the signal is 4x
-% oversampled.
-interpolation = 2;
-interpolated_samples = zeros(1, length(samples) * interpolation);
-interpolated_samples(1:interpolation:end) = samples;
+%% Low pass filter the original samples
+filter_taps = fir1(200, signal_bandwidth/sample_rate);
+samples = filter(filter_taps, 1, samples);
 
-% Define the interpolation filter.  The passband is 1/2 of the bandwidth
-% (there are plenty of guard carriers to cover the stop-band).  Allowing
-% for 400 KHz of stop-band.  Using 200 taps as that seems to work well
-passband_edge = signal_bandwidth/2;
-stopband_edge = signal_bandwidth/2 + 400e3;
-filter_taps = fir1(200, signal_bandwidth/2/sample_rate*interpolation/2);
-interpolated_samples = filter(filter_taps, 1, interpolated_samples);
+%% Search for the ZC sequence in symbol 4
 
-% Calculate new rate dependant variables
-interpolated_fft_size = sample_rate * interpolation / carrier_spacing;
-interpolated_long_cp = round(1/192000 * sample_rate * interpolation);
-interpolated_short_cp = round(0.0000046875 * sample_rate * interpolation);
+% Create the ZC seqeunce
+zc = create_zc(orig_fft_size, 4);
+zc = reshape(zc, 1, []); % Reshape to match the samples vector
 
-figure(2);
-plot(10 * log10(abs(fftshift(fft(interpolated_samples)))));
-title('Interpolated Rate')
-
-% No reason to search *all* of the samples.  The ZC sequence is the third
-% OFDM symbol, so search for up to 5 OFDM symbols.  The first OFDM symbol
-% has a long cyclic prefix, and the remaining 4 use the short sequence
-search_window_length = (interpolated_long_cp + (interpolated_short_cp * 4)) + (interpolated_fft_size * 5);
-[scores] = find_zc(interpolated_samples(1:search_window_length), sample_rate * interpolation);
-[score, index] = max(abs(scores).^2);
-if (score < 0.8)
-    error('Failed to find the first ZC sequence');
+% Run a normalized cross correlation searching for the ZC sequence
+% TODO(8Apr2022): Search through a smaller space (no need to look through everything)
+scores = zeros(1, length(samples)-length(zc));
+for idx=1:length(scores)
+    scores(idx) = normalized_xcorr(zc, samples(idx:idx + length(zc) - 1));
 end
 
-% Calculate where in the interpolated samples the burst should start
-% The calculation is just backing up by 2 short cyclic prefixed, 1 long
-% cyclic prefix, and 3 FFT sizes
-start_offset = index - (((interpolated_short_cp + interpolated_fft_size) * 2) + ...
-    interpolated_long_cp + interpolated_fft_size);
+% Find the highest score value and index
+[score, index] = max(abs(scores).^2);
+if (score < 0.7)
+    warning("Correlation score for the first ZC sequence was bad.  Might have errors later");
+end
 
-% The signal is already filtered, so just throw away every N samples to
-% decimate down to critical rate
-decimation_rate = interpolation * (sample_rate / critial_sample_rate);
-samples = interpolated_samples(start_offset:decimation_rate:end);
+% The ZC sequence is the fourth symbol which means there are three FFT windows, one 
+% long cyclic prefix and two short cyclic prefixes before the ZC.  But, to keep the
+% correlation window as small as possible, the cyclic prefix of the ZC is ignored,
+% so that adds an additional short cyclic prefix of offset
+zc_seq_offset = (orig_fft_size * 3) + orig_long_cp_len + (orig_short_cp_len * 3);
 
-figure(3);
-plot(10 * log10(abs(fftshift(fft(samples)))));
-title('Critical Rate')
+% Calculate where the burst starts based on the correlation index
+start_offset = round(index - zc_seq_offset);
+
+% Trim all samples before the starting offset, and decimate at the same time.
+% The decimation operation here is to get the signal back down to critical rate.
+% Can get away with dropping every other sample because the signal is already filtered
+samples = samples(start_offset:2:end);
 
 %% Calculate critical rate parameters
 fft_size = critial_sample_rate / carrier_spacing;
 long_cp_len = round(0.0000052 * critial_sample_rate);
 short_cp_len = round(0.00000469 * critial_sample_rate);
-
-true_start_index = round(start_offset/decimation_rate);
 
 %% Plot symbol overlays
 %  The logic below is for debugging only.  It draws OFDM symbol boundaries
