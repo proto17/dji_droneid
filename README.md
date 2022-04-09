@@ -12,7 +12,7 @@ The `.m` files in this project *should* work with Octave 5.2.0 and MATLAB.  If u
 The IQ file used in this example will not be made available publicly as it likely contains GPS information about where the drone was when the recording was taken.  The drone used in testing is the DJI Mini 2 with no modifications.  Recordings were taken with an Ettus B205-mini at a sampling rate of 30.72 MSPS.  The signal of interest is in 2.4 GHz and will show up every 600 ms or so.  It will be 10 MHz wide (15.56 MHz with guard carriers).  
 
 List of tasks:
- - Identify ZC sequence
+ - Identify ZC sequence (done)
  - Detect ZC sequence (done)
  - Coarse frequency offset detection/correction (skipped - sorta)
  - Fine frequency offset detection/correction (skipped)
@@ -25,6 +25,8 @@ List of tasks:
 
 ## Identify ZC Sequence
 There are two Zadoff Chu sequences in each burst.  It's unclear as to the correct parameters to generate these sequences.  It's possible that they will have to be brute forced
+
+Update (9 Apr 2022): Thanks to a tip from someone that's looked at this before I finally have the ZC root values for both symbols 4 and 6.  The tip was to brute force through some number of roots and correlate those roots against the received signal.  So, there is now a script called `brute_force_zc.m` that uses one of the received ZC sequences from the `automatic_detector.m` script to check against.  The recording I am working with is very clean with plenty of SNR and dynamic range (12-bit ADC).  For those that don't want to struggle through it, the roots are 600 for symbol 4, and 147 for symbol 6.  From what I can tell you need to create 601 samples and the middle sample gets set to zero since it maps to the DC subcarrier in an FFT.  Either I am doing something wrong or the first ZC sequence is astoundingly resiliant to frequency offset.  Just for grins I pushed the frequency offset to > 1 MHz off and the normalized cross correlation worked like a champ.
 
 ## Detect ZC Sequence
 This has been done by exploiting the fact that the first ZC sequence is symmetric in the time domain (the second might be too) and that a ZC sequence is a CAZAC (constant amplitude, zero autocorrelation).  
