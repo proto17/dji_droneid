@@ -47,6 +47,8 @@ Another one that needs a known sequence in the burst.  The good news is that all
 
 Update: I've skipped this too.  Handily the burst I am looking at right now didn't need much in the way of phase adjustments
 
+Update (9 April 2022): In very quick and rough experiments it seems like I can use the cross correlation results from the ZC sequence to directly adjust for absolute phase offsets :D  More experimentation is needed to be sure, but it looks hopeful and sorta makes sense.  I wasn't sure if cross correlation of the ZC sequence would give me frequency or phase information.  I think that autocorrelating the ZC sequence will give me the frequency offset, and cross correlating with the generated sequence will give me phase information (also amplitude if I ever get that far).
+
 ## Symbol Extraction
 This is super simple and just requires being time and frequency aligned with knowledge of the cyclic prefixes
 
@@ -54,6 +56,9 @@ This is super simple and just requires being time and frequency aligned with kno
 Rumor is that there is a scrambler in use.  It's not clear to me if the scrambler is before or after FEC, but it will need to be dealt with.  Supposedly it's LTE standard.
 
 Update: the scrambler is definitely before the FEC.  I found a really nice writeup about it at https://www.sharetechnote.com/html/Handbook_LTE_PseudoRandomSequence.html.  The scrambling sequence seems to be made out of two Linear Feedback Shift Registers (LFSRs) combined together.  The intital state of the first LFSR is a constant value, but the second LFSR needs certain parameters that relate to the link.  Unfortunately I don't have those parameters.  The only good news is that is *only* a 31-bit exhaust to brute force.  So ~ 2.5 billion attempts and you're assured success!  In the event that the Turbo decoder parameters are magically known then maybe this won't be so bad.
+
+Update(9 April 2022): I've been told that I should expect that the first OFDM symbol will drop out to all zeros when the correct scrambler is applied.  I'm not sure if that's true just yet.  I tried using the recommended initial value of the second LFSR of 0x12345678 (0b001_0010_0011_0100_0101_0110_0111_1000 since the LFSR is 31 bits long).  Another hint is that I need to collect several frames from different drones.  I'm hoping to find out that the first symbol is a constant.  This should become evident when I can get more frames demodulated.  The issue here is that the current process is very manual.  To solve that issue I am working on a MATLAB/Octave script that will use the newly found ZC sequences to locate the bursts and extract them for me.  There's still the issue of the frequency offsets and absolute phase offsets that will have to be done by hand.  Though I should be able to use the ZC sequence to fix the absolute phase offset.
+Also, I think that if collecting multiple bursts shows that the first symbol doesn't change, then I can use a C++ version of the scrambler generator to brute force finding of the correct initial value (assuming that I don't need to also guess the first intial value...)  It'll take for facking ever, but it's possible.
 
 ## Turbo Product Code Removal
 It is assumed that the demodulated data contains an LTE standard TPC.  There are libraries that can handle this (hopefully)
@@ -87,3 +92,16 @@ The remaining OFDM symbols carry just a QPSK.  If there are pilots they are eith
 
 ## Open Source LTE Libs
 I have had zero luck with my few attempts at getting open source LTE tools to understand what the DJI Mini 2 is sending out.  My hunch is that this is due to DJI not following the standard to the letter.  But, I know exceedingly little about LTE, so take that for what it's worth.
+
+# Current Questions
+## Descrambler
+- Is there some special sequence that should appear if descrambling is successful?
+- Is there any real point to trying to get the first frame to drop out to all ones or zeros?
+- Is the first LFSR seeded with the LTE standard value?
+- Are there any known bits for the second LFSR that could reduce the search space?
+
+## Turbo Decoder
+- Are there any special parameters needed, or do I just use something like https://github.com/ttsou/turbofec and feed it the raw data from each symbol without any deviation from the LTE spec?
+
+## Rate Matching
+- I have zero clue how this works, so *any* advice is welcome (I have been told to look at a specific IEEE paper, but don't have an account)
