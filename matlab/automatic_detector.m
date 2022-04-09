@@ -6,7 +6,7 @@ sample_rate = 30.72e6;          % Collected 2x oversampled
 critial_sample_rate = 15.36e6;  % The actual sample rate for this signal
 carrier_spacing = 15e3;         % Per the LTE spec
 signal_bandwidth = 10e6;        % Per the LTE spec
-rough_frequency_offset = 7.5e6; % The collected signal is 5.5 MHz off center
+rough_frequency_offset = 7.5e6; % The collected signal is 7.5 MHz off center
 
 
 %% Read in the IQ samples for a single burst
