@@ -47,6 +47,8 @@ Another one that needs a known sequence in the burst.  The good news is that all
 
 Update: I've skipped this too.  Handily the burst I am looking at right now didn't need much in the way of phase adjustments
 
+Update (9 April 2022): In very quick and rough experiments it seems like I can use the cross correlation results from the ZC sequence to directly adjust for absolute phase offsets :D  More experimentation is needed to be sure, but it looks hopeful and sorta makes sense.  I wasn't sure if cross correlation of the ZC sequence would give me frequency or phase information.  I think that autocorrelating the ZC sequence will give me the frequency offset, and cross correlating with the generated sequence will give me phase information (also amplitude if I ever get that far).
+
 ## Symbol Extraction
 This is super simple and just requires being time and frequency aligned with knowledge of the cyclic prefixes
 
