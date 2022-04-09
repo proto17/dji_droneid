@@ -16,10 +16,14 @@ function [samples] = create_zc(fft_size, symbol_index)
 
     % Pick the correct root for the ZC sequence
     if (symbol_index == 4)
-        zc = zadoffChuSeq(600, 601);
+        root = 600;
     else
-        zc = zadoffChuSeq(147, 601);
+        root = 147;
     end
+    
+    % Would use MATLAB's zadoffChuSeq function, but Octave doesn't have that
+    % The logic below was tested against the MATLAB function
+    zc = reshape(exp(-1j * pi * root * (0:600) .* (1:601) / 601), [], 1);
     
     % Figure out how many guard carriers there should be (purposely ignoring DC here)
     guard_carriers = fft_size - 600;
