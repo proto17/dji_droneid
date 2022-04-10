@@ -2,6 +2,8 @@
 
 *THIS IS A WORK IN PROGRESS!!!*
 
+Also, the credit for this work is not mine alone.  I have several people who are helping me through this process.  Without their hints about how the signal is structured I would not have gotten very far in this short a time.  So thank you very much to those who have assisted me to this point!!!!
+
 ![Alt text](Octave.png?raw=true)
 
 
@@ -18,7 +20,7 @@ List of tasks:
  - Fine frequency offset detection/correction (skipped)
  - Phase correction (skipped)
  - Symbol extraction (done)
- - Descrambling (current struggle)
+ - Descrambling (done - sorta)
  - Turbo Product Code removal
  - Deframing
  - Profit!
@@ -59,6 +61,8 @@ Update: the scrambler is definitely before the FEC.  I found a really nice write
 
 Update(9 April 2022): I've been told that I should expect that the first OFDM symbol will drop out to all zeros when the correct scrambler is applied.  I'm not sure if that's true just yet.  I tried using the recommended initial value of the second LFSR of 0x12345678 (0b001_0010_0011_0100_0101_0110_0111_1000 since the LFSR is 31 bits long).  Another hint is that I need to collect several frames from different drones.  I'm hoping to find out that the first symbol is a constant.  This should become evident when I can get more frames demodulated.  The issue here is that the current process is very manual.  To solve that issue I am working on a MATLAB/Octave script that will use the newly found ZC sequences to locate the bursts and extract them for me.  There's still the issue of the frequency offsets and absolute phase offsets that will have to be done by hand.  Though I should be able to use the ZC sequence to fix the absolute phase offset.
 Also, I think that if collecting multiple bursts shows that the first symbol doesn't change, then I can use a C++ version of the scrambler generator to brute force finding of the correct initial value (assuming that I don't need to also guess the first intial value...)  It'll take for facking ever, but it's possible.
+
+Update(10 April 2022): The initial value I was told turned out to be 100% correct, and I was having an issue with matrix dimensions.  After changing the code to only look at the first OFDM symbol in the descrambler, everything works out!  Huge thanks to those that helped me through the process!
 
 ## Turbo Product Code Removal
 It is assumed that the demodulated data contains an LTE standard TPC.  There are libraries that can handle this (hopefully)
