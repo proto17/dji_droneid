@@ -68,6 +68,10 @@ zc_seq_offset = (orig_fft_size * 3) + orig_long_cp_len + (orig_short_cp_len * 3)
 % Calculate where the burst starts based on the correlation index
 start_offset = round(index - zc_seq_offset);
 
+angle(scores(index))
+% samples = samples .* exp(1j * -angle(scores(index)) * (0:(length(samples)-1)));
+samples = samples .* exp(1j * -angle(scores(index)));
+
 % Trim all samples before the starting offset, and decimate at the same time.
 % The decimation operation here is to get the signal back down to critical rate.
 % Can get away with dropping every other sample because the signal is already filtered
