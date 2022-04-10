@@ -221,6 +221,9 @@ scrambler_perms = [...
 % Number of bits to XOR and show in the terminal
 xor_window = 128;
 
+% TODO(10April2022): REMOVE THIS!!!  IT'S ONLY HERE TO TROUBLESHOOT THE DESCRAMBLER!!!
+data_carriers = data_carriers(1,:);
+figure(88);
 % Loop over the data carriers 4 times, each time rotating the constellation by 90 degrees
 % This is a brute force approach to finding the correct phase offset since it's unknown due
 % to not having a known training sequence
@@ -229,16 +232,29 @@ for idx=0:3
     offset = pi / 2;
     data_carriers = data_carriers .* exp(1j * offset);
 
+    subplot(2, 2, idx+1);
+    plot(data_carriers, 'o');
+
     % The constellations are setup with points at (1,1), (-1,1), (-1,-1), and (1,-1) which 
     % for MATLAB is a pi/4 QPSK.
     % Using Gray coding as it's the most likely coding (but I don't know if that's true for LTE)
-    
-    % WARNING: This logic will explode in Octave.  Octave outputs symbols, not bits.  So a demapping is
-    %          needed.  Example: `demodulated_bits` will have something like [1, 0, 3, 2, 2,...]
-    %          But in MATLAB it's all binary (gets unpacked automatically)
-    %          I'll have to poke around to figure out a way to make MATLAB and Octave match here
-    demodulated_bits = pskdemod(data_carriers, 4, pi/4, 'gray', ...
-        'OutputType', 'bit', 'PlotConstellation', false);
+    demodulated_bits = [];
+    for sample_idx = 1:length(data_carriers)
+        sample = data_carriers(sample_idx);
+        if (real(sample) > 0 && imag(sample) > 0)
+            bits = [0, 0];
+        elseif (real(sample) > 0 && imag(sample) < 0)
+            bits = [0, 1];
+        elseif (real(sample) < 0 && imag(sample) > 0)
+            bits = [1, 0];
+        elseif (real(sample) < 0 && imag(sample) < 0)
+            bits = [1, 1];
+        else
+            error("Invalid coordinate!");
+        end
+
+        demodulated_bits = [demodulated_bits, bits];
+    end
 
     if (exist('OCTAVE_VERSION', 'builtin'))
         % TODO(8April2022): Find a way to demap in Octave that matches MATLAB
