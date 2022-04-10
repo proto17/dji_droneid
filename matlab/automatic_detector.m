@@ -219,7 +219,7 @@ scrambler_perms = [...
 ];
 
 % Number of bits to XOR and show in the terminal
-xor_window = 64;
+xor_window = 128;
 
 % Loop over the data carriers 4 times, each time rotating the constellation by 90 degrees
 % This is a brute force approach to finding the correct phase offset since it's unknown due
