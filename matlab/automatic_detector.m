@@ -92,23 +92,20 @@ plot_symbol_boundaries(samples, critial_sample_rate, 4);
 %% Coarse frequency adjustment
 
 % My CFO detection isn't working, so rotate the constellation by hand (just eyeballing the constellation plots)
-offset_adj = 0;
-samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
+% offset_adj = -0.00005;
+% samples = samples .* exp(1j * 2 * pi * offset_adj * (0:length(samples)-1));
 
-% [offset_est] = estimate_cp_freq_offset(samples, fft_size, short_cp_len, long_cp_len);
-
-% DANGER: I have no idea why this is necessary or why it's equal to the
-% number of OFDM symbols, but here it is.  It's likely that my CFO
-% estimation logic is bad.  But, this works for the moment, and temporary
-% fixes are never actually kept around in code forever...
-% offset_est = offset_est * 9;
-
-% Apply the offset correction
-% samples = samples .* exp(1j * 2 * pi * offset_est * (0:length(samples)-1));
 
 %% Phase adjustment
-phase_offset = deg2rad(15);
-samples = samples * exp(1j * 2 * phase_offset);
+
+% The phase angle adjustment made in the ZC sequence detection step got the QPSK to be lined up with points in 
+% [1,0], [0,1], [-1,0], and [0,-1] but we want it at [1,1], [-1,1], [-1,-1], and [1,-1] to make the demodulation
+% decision simpler.  That means that the constellation needs to be rotated by pi/2 (45 degrees).
+% TODO(10Apr2022): Because of timing offsets there is a lot of "smearing" as the constellation rotates.  Instead of
+%                  fixing that right now, the constellation is rotated a little more to keep the points in distinct
+%                  quadrants.
+phase_offset = pi/2 - 0.5;
+samples = samples * exp(1j * phase_offset);
 
 %% Symbol extraction
 
