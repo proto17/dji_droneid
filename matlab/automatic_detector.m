@@ -235,9 +235,10 @@ for idx=0:3
     subplot(2, 2, idx+1);
     plot(data_carriers, 'o');
 
-    % The constellations are setup with points at (1,1), (-1,1), (-1,-1), and (1,-1) which 
-    % for MATLAB is a pi/4 QPSK.
-    % Using Gray coding as it's the most likely coding (but I don't know if that's true for LTE)
+    % Demapping the constellation points by hand.  The mapping was taken from 
+    % https://github.com/ttsou/openphy/blob/master/src/lte/qam.c#L35
+
+    % Using concatenation like a chump
     demodulated_bits = [];
     for sample_idx = 1:length(data_carriers)
         sample = data_carriers(sample_idx);
