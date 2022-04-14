@@ -255,11 +255,6 @@ for idx=0:3
 
         demodulated_bits = [demodulated_bits, bits];
     end
-
-    if (exist('OCTAVE_VERSION', 'builtin'))
-        % TODO(8April2022): Find a way to demap in Octave that matches MATLAB
-        warning("The output you are about to see is packed symbols.  The key add is going to be wrong!")
-    end
     
     % Try all 4 scrambler possibilities
     xor_out = [
