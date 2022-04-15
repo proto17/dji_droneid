@@ -1,4 +1,15 @@
+% Generates a scrambler sequence for an arbitrary number of bits given an initial state value
+%
+% The initial value should always be the 31 bit sequence 0x12345678 *bit reversed*
+%
+% @param num_bits Number of bits to generate
+% @param x2_init Initial value of the second LFSR.  Must be a row vector and only contain 0/1 values
+% @return bits Row vector of `num_bits` 1/0 values
 function [bits] = generate_scrambler_seq(num_bits, x2_init)
+    assert(isrow(x2_init), "X2 initial value must be a row vector");
+    assert(length(x2_init) == 31, "The X2 initial value must be 31 bits");
+    mustBeMember(x2_init, [0, 1]);
+
     % https://www.sharetechnote.com/html/Handbook_LTE_PseudoRandomSequence.html
     % https://edadocs.software.keysight.com/pages/viewpage.action?pageId=6076479
     % Initial condition of the polynomia x1(). This is fixed value as described in 36.211 7.2

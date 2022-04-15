@@ -35,7 +35,7 @@ function [quantized_bits] = quantize_qpsk(data_carriers)
         elseif (real(sample) < 0 && imag(sample) < 0)
             bits = [1, 1];
         else
-            error("Invalid coordinate!");
+            bits = [0, 0];
         end
         
         % Save off the quatized bits and move the counter ahead by 2
