@@ -4,6 +4,9 @@
 
 Also, the credit for this work is not mine alone.  I have several people who are helping me through this process.  Without their hints about how the signal is structured I would not have gotten very far in this short a time.  So thank you very much to those who have assisted me to this point!!!!
 
+To that point, huge thanks to the following people / groups:
+- Chair for System Security @ Ruhr-Universität Bochum / CISPA Helmholtz Center for Information Security
+
 ![Alt text](Octave.png?raw=true)
 
 
