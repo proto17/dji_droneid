@@ -9,6 +9,14 @@
 %   - Pass XOR'd bits from all other data symbols to a C++ program that removes the LTE and rate matching
 %   - Print out each frame in hex
 
+%% Path Info
+this_script_path = fileparts(matlab.desktop.editor.getActiveFilename);
+turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo');
+if (~ isfile(turbo_decoder_path))
+    error("Could not find Turbo decoder application at '%s'.  Check that the program has been compiled",...
+        turbo_decoder_path);
+end
+
 %% File Parameters
 file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
 file_sample_rate = 30.72e6;
@@ -123,16 +131,9 @@ for burst_idx=1:size(bursts, 1)
     fclose(handle);
 
     % Run the Turbo decoder and rate matcher
-    % NOTE: This tool will be made available at a later date
-    retcode = system("/opt/dji/final_processing /tmp/bits /tmp/output");
+    [retcode, out] = system(sprintf("%s %s", turbo_decoder_path, "/tmp/bits"));
     if (retcode ~= 0)
         error("Failed to run the final processing step");
-    end
-    
-    % Convert the raw bytes to hex using `xxd`
-    [retcode, out] = system("cat /tmp/output | xxd -ps -cols 400");
-    if (retcode ~= 0)
-        error("Failed to convert the binary output to hex");
     end
     
     % Save off the hex values for the frame
