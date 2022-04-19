@@ -17,6 +17,8 @@
 % @return bursts A matrix where each row contains one burst
 function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_offset, correlation_threshold,...
     chunk_size, padding)
+
+    num_samples = get_sample_count_of_file(input_path);
     
     lte_carrier_spacing = 15e3;                       % OFDM carrier spacing
     fft_size = sample_rate / lte_carrier_spacing;     % Number of samples per OFDM symbol (minus cyclic prefix)
