@@ -16,6 +16,10 @@ else
   this_script_path = fileparts(matlab.desktop.editor.getActiveFilename);
 end
 
+% Create a directory to store the constellation plots for debugging
+% THIS CAN BE COMMENTED OUT IF NEEDED!!!  JUST MAKE SURE TO COMMENT OUT THE `saveas` CALL LATER AS WELL
+mkdir(fullfile(this_script_path, "images"));
+
 turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo');
 if (~ isfile(turbo_decoder_path))
     error("Could not find Turbo decoder application at '%s'.  Check that the program has been compiled",...
@@ -114,6 +118,10 @@ for burst_idx=1:size(bursts, 1)
         ylim([-1, 1]);
         xlim([-1, 1]);
     end
+    
+    % Save the constellation plots to disk for debugging
+    % THIS CAN BE COMMENTED OUT IF NEEDED
+    saveas(gcf, sprintf('%s/images/ofdm_symbol_%d.png', this_script_path, burst_idx));
     
     % The remaining bits are descrambled using the same initial value, but more bits
     second_scrambler = generate_scrambler_seq(7200, scrambler_x2_init);
