@@ -14,18 +14,25 @@ This project aims to demodulate DJI DroneID frames and eventually be able to cra
 
 The `.m` files in this project *should* work with Octave 5.2.0 and MATLAB.  If using Octave, make sure to install the `signal` package
 
+Update(15 April 2022): **The main script (matlab/updated_scripts/process_file.m) is broken for Octave.  I will attempt to address this within the next few days.**
+
 The IQ file used in this example will not be made available publicly as it likely contains GPS information about where the drone was when the recording was taken.  The drone used in testing is the DJI Mini 2 with no modifications.  Recordings were taken with an Ettus B205-mini at a sampling rate of 30.72 MSPS.  The signal of interest is in 2.4 GHz and will show up every 600 ms or so.  It will be 10 MHz wide (15.56 MHz with guard carriers).  
+
+# How to Process Samples
+You will need to record DroneID bursts with an SDR, save the samples as 32-bit floating point IQ data, and then edit the `matlab/updated_scripts/process_file.m` script to read your file.  If there is a major frequency offset (say you recorded 7 MHz off center) you will need to specify that in the script.
+
+__Currently the C++ program that does Turbo decoding and rate matching is not in the repo.  This will be added in the next week or so__
 
 List of tasks:
  - Identify ZC sequence (done)
  - Detect ZC sequence (done)
- - Coarse frequency offset detection/correction (skipped - sorta)
+ - Coarse frequency offset detection/correction (done)
  - Fine frequency offset detection/correction (skipped)
- - Phase correction (skipped)
+ - Phase correction (done)
  - Symbol extraction (done)
- - Descrambling (done - sorta)
- - Turbo Product Code removal
- - Deframing
+ - Descrambling (done)
+ - Turbo Product Code removal (done)
+ - Deframing (done)
  - Profit!
 
 ## Identify ZC Sequence
@@ -43,6 +50,8 @@ Neither is great as both are spread pretty far apart.  Nothing like the 16 sampl
 
 Update: I've skipped this step as my primary goal is to get to bits.  For some reason my logic that uses the cyclic prefix is off by a factor of 9.  For now I have done the correction by hand.
 
+Update (15 April 2022): This is complete.  Currently using the cyclic prefix from the first data symbol to get a coarse estimate
+
 ## Fine CFO Detection/Adjustment
 This likely requires the knowledge of the ZC sequence parameters.  Fine CFO needs a long sequence of samples to work well, and they need to either be known ahead of time, or repeated in the transmission.
 Update: I've skipped this as well.  My corrections from the Coarse CFO have taken care of any fine offset as well.
@@ -53,6 +62,8 @@ Another one that needs a known sequence in the burst.  The good news is that all
 Update: I've skipped this too.  Handily the burst I am looking at right now didn't need much in the way of phase adjustments
 
 Update (9 April 2022): In very quick and rough experiments it seems like I can use the cross correlation results from the ZC sequence to directly adjust for absolute phase offsets :D  More experimentation is needed to be sure, but it looks hopeful and sorta makes sense.  I wasn't sure if cross correlation of the ZC sequence would give me frequency or phase information.  I think that autocorrelating the ZC sequence will give me the frequency offset, and cross correlating with the generated sequence will give me phase information (also amplitude if I ever get that far).
+
+Update (15 April 2022): This is now being done with an equalizer that uses the first ZC sequence to get channel taps.  I'm likely not doing it right, but it works for the high SNR environment I'm in :)
 
 ## Symbol Extraction
 This is super simple and just requires being time and frequency aligned with knowledge of the cyclic prefixes
@@ -72,8 +83,12 @@ It is assumed that the demodulated data contains an LTE standard TPC.  There are
 
 A new wrinkle here is that under the Turbo code is going to be "Rate Matching" bits.  I have no idea if that's going to be a standard process that doesn't vary depending on link parameters that aren't already known.
 
+Update (15 April 2022): This is complete.  Code will be uploaded at a later date.
+
 ## Deframing
 The underlying data should be in a known DJI format.  If so then this step should be pretty simple
+
+Update (15 April 2022): This is complete.  Code will be uploaded at a later date.
 
 # Known Values
 ## Frequencies
@@ -102,13 +117,13 @@ I have had zero luck with my few attempts at getting open source LTE tools to un
 
 # Current Questions
 ## Descrambler
-- Is there some special sequence that should appear if descrambling is successful?
-- Is there any real point to trying to get the first frame to drop out to all ones or zeros?
-- Is the first LFSR seeded with the LTE standard value?
-- Are there any known bits for the second LFSR that could reduce the search space?
+- ~~Is there some special sequence that should appear if descrambling is successful?
+- ~~Is there any real point to trying to get the first frame to drop out to all ones or zeros?
+- ~~Is the first LFSR seeded with the LTE standard value?
+- ~~Are there any known bits for the second LFSR that could reduce the search space?
 
 ## Turbo Decoder
-- Are there any special parameters needed, or do I just use something like https://github.com/ttsou/turbofec and feed it the raw data from each symbol without any deviation from the LTE spec?
+- ~~Are there any special parameters needed, or do I just use something like https://github.com/ttsou/turbofec and feed it the raw data from each symbol without any deviation from the LTE spec?
 
 ## Rate Matching
-- I have zero clue how this works, so *any* advice is welcome (I have been told to look at a specific IEEE paper, but don't have an account)
+- ~~I have zero clue how this works, so *any* advice is welcome (I have been told to look at a specific IEEE paper, but don't have an account)
