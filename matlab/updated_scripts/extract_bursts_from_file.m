@@ -44,7 +44,10 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
 
     freq_offset_vec = reshape(exp(freq_offset_constant * [1:burst_sample_count]), 1, []);
 
-    bursts = zeros(length(indices), burst_sample_count); % Allocate storage for the bursts and padding for each
+    % It's not known right away if the first and last bursts are going to be clipped because there aren't enough
+    % samples.  So, as filthy as it is, use concatenation to build up a list of starting indices that will definitely
+    % have all samples present in the input file
+    valid_burst_indices = [];
 
     for idx=1:length(indices)
         start_index = indices(idx);
