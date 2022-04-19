@@ -34,7 +34,7 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
     fprintf('There are %d samples in "%s"\n', total_samples, file_path);
     
     % Really large array to store the cross correlation results from *all* samples
-    zc_scores = zeros(total_samples - length(correlator_taps), 0);
+    zc_scores = zeros(total_samples - length(correlator_taps), 1);
     
     sample_offset = 0;
     while (~ feof(file_handle))    
