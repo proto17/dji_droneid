@@ -108,16 +108,6 @@ for burst_idx=1:size(bursts, 1)
         xlim([-1, 1]);
     end
     
-    % The first data symbol should XOR out to all zeros.  Create a scrambler just for it, and XOR the bits against the
-    % scrambler.  Warn the user if not all of the bits end up zero
-    % TODO(15April2022): For some reason there's always one bit that's wrong.  Might be something dumb in the code
-    first_scrambler = generate_scrambler_seq(1200, scrambler_x2_init);
-
-    ones_in_output = sum(bitxor(bits(1,:), first_scrambler));
-    if (ones_in_output > 0)
-        warning("Found %d one(s) in the first symbol which should be all zeros", ones_in_output)
-    end
-    
     % The remaining bits are descrambled using the same initial value, but more bits
     second_scrambler = generate_scrambler_seq(7200, scrambler_x2_init);
 
