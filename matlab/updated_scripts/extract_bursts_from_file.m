@@ -42,6 +42,7 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     % first OFDM symbol isn't used for anything.
     burst_sample_count = (padding * 2) + (long_cp_len * 2) + (short_cp_len * 7) + (fft_size * 9);
 
+    % Pre-calculate the frequency offset adjustment vector as this will be constant for all bursts
     freq_offset_vec = reshape(exp(freq_offset_constant * [1:burst_sample_count]), 1, []);
 
     % It's not known right away if the first and last bursts are going to be clipped because there aren't enough
