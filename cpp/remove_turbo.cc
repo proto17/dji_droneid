@@ -90,7 +90,8 @@ int main(int argc, const char ** argv) {
     // Validate and convert bits from input file
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
-    // Load bearing constants.  Do not change!!
+    // Load bearing constants.  Do not change!!  Just playing with the values, most will work up to, and including, 63
+    // Going past 63 seems to result in a failure to decode.
     int8_t bit_value_lut[2] = {-63, 63};
 
     std::vector<int8_t> turbo_decoder_input(input_file_bit_count);
@@ -147,13 +148,11 @@ int main(int argc, const char ** argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Validate the CRC24 at the end of the Turbo decoded data
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const uint32_t calculated_crc = CRC::Calculate(&decoded_bytes[0], decoded_bytes.size() - 3, CRC::CRC_24_LTEA());
-    const uint32_t expected_crc = (decoded_bytes[expected_payload_bytes-3] << 16) | 
-                                  (decoded_bytes[expected_payload_bytes-2] << 8 ) |
-                                  (decoded_bytes[expected_payload_bytes-1] << 0 );
+    const uint32_t calculated_crc = CRC::Calculate(&decoded_bytes[0], decoded_bytes.size(), CRC::CRC_24_LTEA());
     
-    if (calculated_crc != expected_crc) {
-        fprintf(stderr, "[ERROR] CRC did not match.  Got %06x, expected %06x\n", calculated_crc, expected_crc);
+    // Since the received CRC bytes were included in the calculation above, the output should be all zeros
+    if (calculated_crc != 0) {
+        fprintf(stderr, "[ERROR] CRC did not zero out.  Got %06x after calculation\n", calculated_crc);
         return 1;
     }
     
