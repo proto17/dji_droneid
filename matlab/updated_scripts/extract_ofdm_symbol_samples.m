@@ -21,8 +21,8 @@ function [time_domain, freq_domain] = extract_ofdm_symbol_samples(samples, sampl
         long_cp_len...
     ];
 
-    freq_domain = zeros(9, fft_size);
-    time_domain = zeros(9, fft_size);
+    freq_domain = zeros(length(cp_lengths), fft_size);
+    time_domain = zeros(length(cp_lengths), fft_size);
     
     sample_offset = 1;
     for idx=1:length(cp_lengths)
