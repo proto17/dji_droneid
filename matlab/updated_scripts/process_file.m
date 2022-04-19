@@ -10,7 +10,12 @@
 %   - Print out each frame in hex
 
 %% Path Info
-this_script_path = fileparts(matlab.desktop.editor.getActiveFilename);
+if (is_octave)
+  this_script_path = fileparts(mfilename('fullpath'));
+else
+  this_script_path = fileparts(matlab.desktop.editor.getActiveFilename);
+endif
+
 turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo');
 if (~ isfile(turbo_decoder_path))
     error("Could not find Turbo decoder application at '%s'.  Check that the program has been compiled",...

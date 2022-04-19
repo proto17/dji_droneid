@@ -8,7 +8,7 @@
 function [bits] = generate_scrambler_seq(num_bits, x2_init)
     assert(isrow(x2_init), "X2 initial value must be a row vector");
     assert(length(x2_init) == 31, "The X2 initial value must be 31 bits");
-    mustBeMember(x2_init, [0, 1]);
+    must_be_member(x2_init, [0, 1]);
 
     % https://www.sharetechnote.com/html/Handbook_LTE_PseudoRandomSequence.html
     % https://edadocs.software.keysight.com/pages/viewpage.action?pageId=6076479
