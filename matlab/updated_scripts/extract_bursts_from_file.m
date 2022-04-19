@@ -35,7 +35,11 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     % Find all instances of the first ZC sequence
     indices = find_zc_indices_by_file(input_path, sample_rate, frequency_offset, correlation_threshold, chunk_size);
 
-    % Number of samples that need to be extracted.  There are 9 OFDM symbols, 2 long and 7 short cyclic prefixes
+    % In the DJI Mini 2 there are 9 OFDM symbols: 2 long cyclic prefixes, 7 short.  This isn't the case on all drones.
+    % For some drones there are just 8 OFDM symbols.  It looks like those drones just don't send the first OFDM symbol
+    % that's present on the Mini 2.  That symbol XOR's out to all zeros anyway, so it's not important.  So, to keep
+    % things consistent, the logic below will always extract out 9 OFDM symbols worth of samples.  In later steps the
+    % first OFDM symbol isn't used for anything.
     burst_sample_count = (padding * 2) + (long_cp_len * 2) + (short_cp_len * 7) + (fft_size * 9);
 
     freq_offset_vec = reshape(exp(freq_offset_constant * [1:burst_sample_count]), 1, []);
