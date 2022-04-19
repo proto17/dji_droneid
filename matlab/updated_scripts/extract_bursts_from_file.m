@@ -45,10 +45,35 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     for idx=1:length(indices)
         start_index = indices(idx);
         
-        % Back the start index off by the padding and take `burst_sample_count` samples
-        burst = read_complex_floats(input_path, start_index - padding - zc_seq_offset, burst_sample_count);
+        % Calculate when the burst will start and end
+        actual_start_index = start_index - padding - zc_seq_offset;
+        actual_end_index = actual_start_index + burst_sample_count;
         
+        % Ensure that all samples related to this burst are present in the recording
+        if (actual_start_index < 1)
+            warning("Skipping burst at offset %d as the beginning of the burst has been clipped", start_index);
+            continue
+        end
+        
+        if (actual_end_index > num_samples)
+            warning("Skipping burst at offset %d as the ending of the burst will be clipped", start_index);
+            continue
+        end
+        
+        % Again, concatenation is filthy, but necessary here since the actual number of bursts is unknown
+        valid_burst_indices = [valid_burst_indices actual_start_index];
+    end
+
+    % Now that the true number of bursts is known, create a buffer to hold everything
+    bursts = zeros(length(valid_burst_indices), burst_sample_count);
+
+    for idx=1:length(valid_burst_indices)
+        % Read in the current burst.  The starting index was calculated above
+        burst = read_complex_floats(input_path, valid_burst_indices(idx), burst_sample_count);
+        
+        % Adjust for the user-specified frequency offset that is present in the recording and save those samples off
         bursts(idx,:) = burst .* freq_offset_vec;
     end
+    
 end
 
