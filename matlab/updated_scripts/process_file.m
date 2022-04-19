@@ -14,7 +14,7 @@ if (is_octave)
   this_script_path = fileparts(mfilename('fullpath'));
 else
   this_script_path = fileparts(matlab.desktop.editor.getActiveFilename);
-endif
+end
 
 turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo');
 if (~ isfile(turbo_decoder_path))
