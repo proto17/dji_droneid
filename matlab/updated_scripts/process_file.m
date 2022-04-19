@@ -61,8 +61,9 @@ scrambler_x2_init = fliplr([0 0 1, 0 0 1 0, 0 0 1 1, 0 1 0 0, 0 1 0 1, 0 1 1 0, 
 % OFDM symbols, and some use 8.  It seems that those drones that use 8 OFDM symbols have a short cyclic prefix in the
 % first symbol.  Skipping the first symbol for those drones that have 9 OFDM symbols results in the new "first" symbol
 % having a short cyclic prefix as well.  So, since the burst extractor always assumes that there are 9 symbols, the
-% first symbol is skipped for the purposes of coarse CFO
+% first symbol is skipped for the purposes of coarse CFO.  The second symbol is assumed to have a short cyclic prefix
 coarse_cfo_symbol_sample_offset = fft_size + long_cp_len + 1;
+coarse_cfo_symbol_cyclic_prefix = short_cp_len;
 
 %% Burst Processing
 for burst_idx=1:size(bursts, 1)
@@ -79,8 +80,13 @@ for burst_idx=1:size(bursts, 1)
 
     %% Coarse frequency offset adjustment using one of the OFDM symbols (see coarse_cfo_symbol_sample_offset definition)
     % Get the cyclic prefix, and then the copy of the cyclic prefix that exists at the end of the OFDM symbol
-    cp = burst(coarse_cfo_symbol_sample_offset:coarse_cfo_symbol_sample_offset + long_cp_len - 1);
-    copy = burst(coarse_cfo_symbol_sample_offset + fft_size + 1:coarse_cfo_symbol_sample_offset + fft_size + 1 + long_cp_len - 1);
+    cp = burst(...
+        coarse_cfo_symbol_sample_offset:...
+        coarse_cfo_symbol_sample_offset + coarse_cfo_symbol_cyclic_prefix - 1);
+
+    copy = burst(...
+        coarse_cfo_symbol_sample_offset + fft_size + 1:...
+        coarse_cfo_symbol_sample_offset + fft_size + 1 + coarse_cfo_symbol_cyclic_prefix - 1);
     
     % Calculate the frequency offset by taking the dot product of the two copies of the cyclic prefix and dividing out
     % the number of samples in between each cyclic prefix sample (the FFT size)
