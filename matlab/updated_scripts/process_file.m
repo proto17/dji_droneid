@@ -99,7 +99,7 @@ for burst_idx=1:size(bursts, 1)
     % Walk through each OFDM symbol and extract the data carriers and demodulate the QPSK inside
     % This is done for symbols 4 and 6 even though they contain ZC sequences.  It's just to keep the logic clean
     figure(1);
-    for idx=1:9
+    for idx=1:size(bits, 1)
         % Equalize *all* carriers (not just data) with the channel taps
         equalized = freq_domain_symbols(idx,:) .* channel;
 
