@@ -5,12 +5,7 @@
 % file_sample_rate = 30.72e6;     % Collected 2x oversampled
 % rough_frequency_offset = 7.5e6; % The collected signal is 7.5 MHz off center
 % correlation_threshold = 0.7;    % Minimum correlation score to accept (0.0 - 1.0)
-%
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% NOTE: THIS FILE ONLY CURRENTLY WORKS IN 
-%       MATLAB!!!  THERE IS AN ISSUE WITH 
-%       LINE 58 :(
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequency_offset, correlation_threshold, chunk_size)
     %% LTE parameters
