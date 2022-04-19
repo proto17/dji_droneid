@@ -160,8 +160,9 @@ int main(int argc, const char ** argv) {
     // Print the decoded frame in hex
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const uint32_t payload_crc_byte_len = 2;     // There is a 16-bit CRC at the end of the payload
-    const uint32_t payload_padding_byte_len = 1; // There is a single byte of 0x00 just before the 16-bit CRC
-    const uint32_t payload_length = decoded_bytes[0] + payload_crc_byte_len + payload_padding_byte_len;
+    const uint32_t additional_payload_bytes = 1; // There is a single byte of 0x00 just before the 16-bit CRC that 
+                                                 // doesn't appear to be a part of the length field (first byte)
+    const uint32_t payload_length = decoded_bytes[0] + payload_crc_byte_len + additional_payload_bytes;
     
     // Print out the frame in hex
     for (uint32_t idx = 0; idx < payload_length; idx++) {
