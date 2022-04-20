@@ -101,7 +101,7 @@ for burst_idx=1:size(bursts, 1)
     [time_domain_symbols, freq_domain_symbols] = extract_ofdm_symbol_samples(burst, file_sample_rate);
     
     % Calculate the channel based on the first ZC sequence which is in OFDM symbol #4
-    channel = calculate_channel(freq_domain_symbols(4,:), file_sample_rate);
+    channel = calculate_channel(freq_domain_symbols(4,:), file_sample_rate, 4);
 
     % Place to store the demodulated bits
     bits = zeros(9, 1200);
