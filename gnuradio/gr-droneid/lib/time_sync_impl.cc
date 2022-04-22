@@ -89,11 +89,12 @@ namespace gr {
 
             const uint32_t offset = (fft_size_ * 3) + (short_cp_len_ * 3) + long_cp_len_;
 
-//            std::cout << "Max: " << max_idx << " offset: " << offset << " - " << (max_idx - offset) << "\n";
-//            std::cout << "short: " << short_cp_len_ << " long: " << long_cp_len_ << " fft: " << fft_size_ << "\n";
+            std::cout << "Max: " << max_idx << " offset: " << offset << " - " << (max_idx - offset) << "\n";
+            std::cout << "short: " << short_cp_len_ << " long: " << long_cp_len_ << " fft: " << fft_size_ << "\n";
 
             auto new_meta = pmt::make_dict();
             new_meta = pmt::dict_add(new_meta, pmt::mp("start_idx"), pmt::from_uint64(max_idx - offset));
+            pmt::print(new_meta);
             message_port_pub(pmt::mp("pdus"), pmt::cons(new_meta, vec));
 
             file_counter_++;
