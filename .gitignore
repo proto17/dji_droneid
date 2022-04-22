@@ -1,3 +1,4 @@
 **/*.asv
 **/*.fc32
 **/octave-workspace
+collects/
