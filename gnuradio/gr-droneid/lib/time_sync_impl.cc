@@ -79,7 +79,9 @@ namespace gr {
         }
 
         void time_sync_impl::msg_handler(const pmt::pmt_t & pdu) {
-            auto burst_ptr = pmt::c32vector_elements(pdu, pdu_element_count_);
+            auto meta = pmt::car(pdu);
+            auto vec = pmt::cdr(pdu);
+            auto burst_ptr = pmt::c32vector_elements(vec, pdu_element_count_);
 //            write_samples("/tmp/bursts/file_"+std::to_string(file_counter_), burst_ptr, element_count);
 
             if (buffer_.size() < pdu_element_count_) {
@@ -103,9 +105,9 @@ namespace gr {
 //            std::cout << "Max: " << max_idx << " offset: " << offset << " - " << (max_idx - offset) << "\n";
 //            std::cout << "short: " << short_cp_len_ << " long: " << long_cp_len_ << " fft: " << fft_size_ << "\n";
 
-            auto meta = pmt::make_dict();
-            meta = pmt::dict_add(meta, pmt::mp("start_idx"), pmt::from_uint64(offset));
-            message_port_pub(pmt::mp("pdus"), pmt::cons(meta, pdu));
+            auto new_meta = pmt::make_dict();
+            new_meta = pmt::dict_add(new_meta, pmt::mp("start_idx"), pmt::from_uint64(max_idx - offset));
+            message_port_pub(pmt::mp("pdus"), pmt::cons(new_meta, vec));
 
             file_counter_++;
         }

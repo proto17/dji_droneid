@@ -25,5 +25,6 @@ install(FILES
     api.h
     extractor.h
     time_sync.h
-        ../../lib/utils.h DESTINATION include/droneid
+        ../../lib/utils.h
+    demodulation.h DESTINATION include/droneid
 )

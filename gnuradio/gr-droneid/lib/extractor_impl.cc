@@ -43,7 +43,7 @@ namespace gr {
                                  gr::io_signature::make2(2, 2, sizeof(gr_complex), sizeof(float)),
                                  gr::io_signature::make(0, 0, 0)), fft_size_(round(sample_rate / CARRIER_SPACING)),
                                  long_cp_len_(round(sample_rate / 192000)), short_cp_len_(round(0.0000046875 * sample_rate)),
-                                 extract_samples_count_((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7)){
+                                 extract_samples_count_((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7) + (fft_size_ * 2)){
             this->message_port_register_out(pmt::mp("pdus"));
 
             buffer_.resize(extract_samples_count_);
@@ -83,7 +83,7 @@ namespace gr {
                             pmt::pmt_t pdu = pmt::init_c32vector(buffer_.size(), buffer_);
                             std::cout << "moo: " << pmt::is_uniform_vector(pdu) << "\n";
                             std::cout << "Sending message with " << pmt::length(pdu) << " elements (" << extract_samples_count_ << ")\n";
-                            message_port_pub(pmt::mp("pdus"), pdu);
+                            message_port_pub(pmt::mp("pdus"), pmt::cons(pmt::make_dict(), pdu));
 
                             collected_samples_ = 0;
                         }

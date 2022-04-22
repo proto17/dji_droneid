@@ -27,6 +27,7 @@ list(APPEND droneid_sources
     extractor_impl.cc
     time_sync_impl.cc
     utils.cpp
+    demodulation_impl.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
