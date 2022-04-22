@@ -24,7 +24,7 @@
 
 #include <gnuradio/io_signature.h>
 #include "demodulation_impl.h"
-#include "utils.h"
+#include "droneid/misc_utils.h"
 #include <volk/volk.h>
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft_shift.h>
@@ -46,8 +46,8 @@ namespace gr {
                 : gr::sync_block("demodulation",
                                  gr::io_signature::make(0, 0, 0),
                                  gr::io_signature::make(0, 0, 0)),
-                                 sample_rate_(sample_rate), fft_size_(get_fft_size(sample_rate)), long_cp_len_(
-                        get_long_cp_len(sample_rate)), short_cp_len_(get_short_cp_len(sample_rate)) {
+                                 sample_rate_(sample_rate), fft_size_(misc_utils::get_fft_size(sample_rate)), long_cp_len_(
+                        misc_utils::get_long_cp_len(sample_rate)), short_cp_len_(misc_utils::get_short_cp_len(sample_rate)) {
             message_port_register_in(pmt::mp("pdus"));
             message_port_register_out(pmt::mp("pdus"));
             set_msg_handler(pmt::mp("pdus"), [this](pmt::pmt_t pdu){handle_msg(pdu);});
@@ -74,7 +74,7 @@ namespace gr {
 
             std::cout << "FFT SIZE: " << fft_size_ << ", sample rate: " << sample_rate_ << "\n";
 
-            zc_ = create_zc_sequence(sample_rate_, 600);
+            zc_ = misc_utils::create_zc_sequence(sample_rate_, 600);
             fft_ = std::unique_ptr<gr::fft::fft_complex>(new gr::fft::fft_complex(static_cast<int>(fft_size_), true, 1));
             fft_shift_ = std::unique_ptr<gr::fft::fft_shift<std::complex<float>>>(new gr::fft::fft_shift<std::complex<float>>(fft_size_));
 
@@ -85,26 +85,13 @@ namespace gr {
             fft_shift_->shift(zc_);
             channel_.resize(fft_size_);
 
-            write_samples("/tmp/bursts/zc", zc_);
+            misc_utils::write_samples("/tmp/bursts/zc", zc_);
         }
 
         /*
          * Our virtual destructor.
          */
         demodulation_impl::~demodulation_impl() {
-        }
-
-        void demodulation_impl::write_samples(const std::string &path, const std::vector<std::complex<float>> &samples) {
-            write_samples(path, &samples[0], samples.size());
-        }
-
-        void demodulation_impl::write_samples(const std::string &path, const std::complex<float> * const samples, const uint32_t element_count) {
-            FILE * handle = fopen(path.c_str(), "wb");
-            if (!handle) {
-                throw std::runtime_error("Failed to open output file");
-            }
-            fwrite(samples, sizeof(samples[0]), element_count, handle);
-            fclose(handle);
         }
 
         void demodulation_impl::handle_msg(pmt::pmt_t pdu) {
@@ -120,10 +107,10 @@ namespace gr {
             const auto start_idx_pmt = pmt::dict_ref(meta, pmt::mp("start_idx"), pmt::from_uint64(0));
             const auto start_idx = pmt::to_uint64(start_idx_pmt);
 
-            if (start_idx == 0) {
-                std::cerr << "Invalid start index!\n";
-                return;
-            }
+//            if (start_idx == 0) {
+//                std::cerr << "Invalid start index!\n";
+//                return;
+//            }
 
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////
             /// CFO detection and adjustment using cyclic prefix
@@ -159,7 +146,7 @@ namespace gr {
             /// Channel estimation and equalization
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////
             volk_32fc_x2_divide_32fc(&channel_[0],  &zc_[0], &symbols_[3][0], fft_size_);
-            write_samples("/tmp/bursts/channel", channel_);
+            misc_utils::write_samples("/tmp/bursts/channel", channel_);
 
             for (uint32_t symbol_idx = 0; symbol_idx < cp_lengths_.size(); symbol_idx++) {
                 for (uint32_t idx = 0; idx < fft_size_; idx++) {

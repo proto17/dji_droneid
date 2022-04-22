@@ -35,6 +35,8 @@ namespace gr {
 
 
             static constexpr float CARRIER_SPACING = 15e3;
+            uint64_t start_sample_index_;
+            uint64_t total_samples_read_;
             state_t current_state_;
             uint32_t collected_samples_;
             const uint32_t fft_size_;

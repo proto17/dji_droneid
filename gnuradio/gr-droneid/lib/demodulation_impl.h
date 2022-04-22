@@ -34,8 +34,6 @@ namespace gr {
             const uint32_t fft_size_;
             const uint32_t long_cp_len_;
             const uint32_t short_cp_len_;
-            void write_samples(const std::string &path, const std::complex<float> * samples, uint32_t element_count);
-            void write_samples(const std::string & path, const std::vector<std::complex<float>> & samples);
 
             std::unique_ptr<gr::fft::fft_complex> fft_;
             std::unique_ptr<gr::fft::fft_shift<std::complex<float>>> fft_shift_;

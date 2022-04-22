@@ -28,6 +28,7 @@ list(APPEND droneid_sources
     time_sync_impl.cc
     utils.cpp
     demodulation_impl.cc
+    misc_utils.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)

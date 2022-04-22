@@ -26,5 +26,6 @@ install(FILES
     extractor.h
     time_sync.h
         ../../lib/utils.h
-    demodulation.h DESTINATION include/droneid
+    demodulation.h
+    misc_utils.h DESTINATION include/droneid
 )

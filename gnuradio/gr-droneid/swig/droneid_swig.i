@@ -12,6 +12,7 @@
 #include "droneid/extractor.h"
 #include "droneid/time_sync.h"
 #include "droneid/demodulation.h"
+#include "droneid/misc_utils.h"
 //#include "droneid/utils.h"
 %}
 
@@ -28,3 +29,4 @@ GR_SWIG_BLOCK_MAGIC2(droneid, time_sync);
 //%}
 %include "droneid/demodulation.h"
 GR_SWIG_BLOCK_MAGIC2(droneid, demodulation);
+%include "droneid/misc_utils.h"

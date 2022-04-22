@@ -24,6 +24,7 @@
 
 #include <gnuradio/io_signature.h>
 #include "extractor_impl.h"
+#include "droneid/misc_utils.h"
 
 namespace gr {
     namespace droneid {
@@ -41,14 +42,15 @@ namespace gr {
         extractor_impl::extractor_impl(double sample_rate)
                 : gr::sync_block("extractor",
                                  gr::io_signature::make2(2, 2, sizeof(gr_complex), sizeof(float)),
-                                 gr::io_signature::make(0, 0, 0)), fft_size_(round(sample_rate / CARRIER_SPACING)),
-                                 long_cp_len_(round(sample_rate / 192000)), short_cp_len_(round(0.0000046875 * sample_rate)),
-                                 extract_samples_count_((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7) + (fft_size_ * 2)){
+                                 gr::io_signature::make(0, 0, 0)), fft_size_(misc_utils::get_fft_size(sample_rate)),
+                                 long_cp_len_(misc_utils::get_long_cp_len(sample_rate)), short_cp_len_(misc_utils::get_short_cp_len(sample_rate)),
+                                 extract_samples_count_((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7)){
             this->message_port_register_out(pmt::mp("pdus"));
 
             buffer_.resize(extract_samples_count_);
             current_state_ = state_t::WAITING_FOR_THRESHOLD;
             collected_samples_ = 0;
+            total_samples_read_ = 0;
         }
 
         /*

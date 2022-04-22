@@ -31,7 +31,6 @@ namespace gr {
         class time_sync_impl : public time_sync {
         private:
             using filter_t = gr::filter::kernel::fir_filter_ccc;
-            static constexpr float CARRIER_SPACING = 15e3;
             const double sample_rate_;
             const uint32_t fft_size_;
             const uint32_t long_cp_len_;
@@ -43,8 +42,6 @@ namespace gr {
             std::unique_ptr<filter_t> correlator_ptr_;
             uint32_t file_counter_ = 0;
             void msg_handler(const pmt::pmt_t & pdu);
-            void write_samples(const std::string &path, const std::complex<float> * samples, uint32_t element_count);
-            void write_samples(const std::string & path, const std::vector<std::complex<float>> & samples);
 
         public:
             time_sync_impl(double sample_rate);
