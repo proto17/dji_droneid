@@ -200,68 +200,48 @@ plot(squeeze(data_carriers));
 subplot(1, 2, 2);
 plot(squeeze(data_carriers), 'o');
 
-%% Below is a brute force attempt at trying to get the first data symbol to drop out as all 0's or 1's
+%% Demodulate the data carrier bits
 
-% Initializing to 0x12345678
-scrambler_x2_init = [0 0 1, 0 0 1 0, 0 0 1 1, 0 1 0 0, 0 1 0 1, 0 1 1 0, 0 1 1 1, 1 0 0 0];
+% The first OFDM symbol is a constant value.  It's a sync of sorts
+
+% Initializing to 0x12345678 and reversing the bit order
+scrambler_x2_init = fliplr([0 0 1, 0 0 1 0, 0 0 1 1, 0 1 0 0, 0 1 0 1, 0 1 1 0, 0 1 1 1, 1 0 0 0]);
 
 % Generate enough random for one OFDM symbol (need two bits per data carrier since there are 2 bits per sample)
-scrambler_bit_count = length(data_carriers) * 2;
+first_sym_scrambler_bit_count = length(data_carriers) * 2;
 
-% Try out 4 possibilities for the scrambler.  It's unclear if the order of the initialization vector
-% is correct, nor if the output of the scrambler needs to be reversed before getting applied.  So, try
-% all 4 combos
-scrambler_perms = [...
-    generate_scrambler_seq(scrambler_bit_count, scrambler_x2_init);
-    generate_scrambler_seq(scrambler_bit_count, fliplr(scrambler_x2_init));
-    fliplr(generate_scrambler_seq(scrambler_bit_count, scrambler_x2_init));
-    fliplr(generate_scrambler_seq(scrambler_bit_count, fliplr(scrambler_x2_init)));
-];
+% Create enough scrambler to validate the first symbol as it will annihilate (XOR to all zeros) when the scrambler is
+% applied.
+first_sym_scrambler = generate_scrambler_seq(first_sym_scrambler_bit_count, scrambler_x2_init);
 
-% Number of bits to XOR and show in the terminal
-xor_window = 128;
+% Need to rotate the carriers by 180 degrees due to corrections that were made earlier
+% TODO(13April2022): This needs to be removed as it's a correction that's required due to changes made earlier
+data_carriers = data_carriers .* exp(1j * pi);
 
-% TODO(10April2022): REMOVE THIS!!!  IT'S ONLY HERE TO TROUBLESHOOT THE DESCRAMBLER!!!
-data_carriers = data_carriers(1,:);
-figure(88);
-% Loop over the data carriers 4 times, each time rotating the constellation by 90 degrees
-% This is a brute force approach to finding the correct phase offset since it's unknown due
-% to not having a known training sequence
-for idx=0:3
-    % Rotate all samples by 90 degrees
-    offset = pi / 2;
-    data_carriers = data_carriers .* exp(1j * offset);
+% Extract bits from the QPSK data carriers of the first OFDM symbol
+first_data_carrier_bits = reshape(quantize_qpsk(data_carriers(1,:)), 1, []);
 
-    subplot(2, 2, idx+1);
-    plot(data_carriers, 'o');
+assert(isequal(bitxor(first_sym_scrambler, first_data_carrier_bits), zeros(size(first_sym_scrambler))),...
+    "Expected that the first data symbol would be all zeros after applying the scrambler...");
 
-    % Demapping the constellation points by hand.  The mapping was taken from 
-    % https://github.com/ttsou/openphy/blob/master/src/lte/qam.c#L35
+remaining_syms_scrambler = generate_scrambler_seq(6 * length(data_carriers) * 2, scrambler_x2_init);
 
-    % Using concatenation like a chump
-    demodulated_bits = [];
-    for sample_idx = 1:length(data_carriers)
-        sample = data_carriers(sample_idx);
-        if (real(sample) > 0 && imag(sample) > 0)
-            bits = [0, 0];
-        elseif (real(sample) > 0 && imag(sample) < 0)
-            bits = [0, 1];
-        elseif (real(sample) < 0 && imag(sample) > 0)
-            bits = [1, 0];
-        elseif (real(sample) < 0 && imag(sample) < 0)
-            bits = [1, 1];
-        else
-            error("Invalid coordinate!");
-        end
-
-        demodulated_bits = [demodulated_bits, bits];
-    end
-    
-    % Try all 4 scrambler possibilities
-    xor_out = [
-        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(1,1:xor_window))); 
-        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(2,1:xor_window)));
-        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(3,1:xor_window))); 
-        char('0'+bitxor(demodulated_bits(1,1:xor_window), scrambler_perms(4,1:xor_window)));
-    ]
+bits = [];
+for sym_idx = 2:7
+    bits = [bits; quantize_qpsk(data_carriers(sym_idx,:))];
 end
+
+descrambled_bits = bitxor(remaining_syms_scrambler, reshape(bits, 1, []));
+handle = fopen("/tmp/bits", "wb");
+fwrite(handle, descrambled_bits, 'int8');
+fclose(handle);
+
+
+zc2 = symbols_time_domain(6,:);
+a = zc2(1:128);
+scores = [];
+for idx=1:(length(zc2)-length(a))
+    scores = [scores, normalized_xcorr(a, zc2(idx:idx+length(a)-1))];
+end
+figure(11111);
+plot(abs(scores).^2);
