@@ -82,10 +82,11 @@ namespace gr {
                         buffer_[collected_samples_++] = samples[idx];
                         if (collected_samples_ == extract_samples_count_) {
                             current_state_ = state_t::WAITING_FOR_THRESHOLD;
-                            pmt::pmt_t pdu = pmt::init_c32vector(buffer_.size(), buffer_);
-                            std::cout << "moo: " << pmt::is_uniform_vector(pdu) << "\n";
-                            std::cout << "Sending message with " << pmt::length(pdu) << " elements (" << extract_samples_count_ << ")\n";
-                            message_port_pub(pmt::mp("pdus"), pmt::cons(pmt::make_dict(), pdu));
+                            const pmt::pmt_t vec = pmt::init_c32vector(buffer_.size(), buffer_);
+                            pmt::pmt_t meta = pmt::make_dict();
+                            meta = pmt::dict_add(meta, pmt::mp("start_offset"), pmt::from_uint64(start_sample_index_));
+                            std::cout << "Sending message with " << pmt::length(vec) << " elements (" << extract_samples_count_ << ") starting at " << start_sample_index_ << "\n";
+                            message_port_pub(pmt::mp("pdus"), pmt::cons(meta, vec));
 
                             collected_samples_ = 0;
                         }
