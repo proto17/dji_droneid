@@ -2,3 +2,4 @@
 **/*.fc32
 **/octave-workspace
 collects/
+**/images/*.png
