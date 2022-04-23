@@ -21,7 +21,9 @@ function [samples] = create_zc(fft_size, symbol_index)
         root = 147;
     end
     
-    zc = reshape(create_zc_seq(fft_size, root), [], 1);
+    % Would use MATLAB's zadoffChuSeq function, but Octave doesn't have that
+    % The logic below was tested against the MATLAB function
+    zc = reshape(exp(-1j * pi * root * (0:600) .* (1:601) / 601), [], 1);
     
     % Figure out how many guard carriers there should be (purposely ignoring DC here)
     guard_carriers = fft_size - 600;
