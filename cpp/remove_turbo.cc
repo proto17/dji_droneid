@@ -170,5 +170,8 @@ int main(int argc, const char ** argv) {
     }
     fprintf(stdout, "\n");
     
+    free_tdec(turbo_decoder);
+    lte_rate_matcher_free(rate_matcher);
+
     return 0;
 }
