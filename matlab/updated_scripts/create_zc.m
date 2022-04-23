@@ -21,9 +21,7 @@ function [samples] = create_zc(fft_size, symbol_index)
         root = 147;
     end
     
-    % Would use MATLAB's zadoffChuSeq function, but Octave doesn't have that
-    % The logic below was tested against the MATLAB function
-    zc = reshape(exp(-1j * pi * root * (0:600) .* (1:601) / 601), [], 1);
+    zc = reshape(create_zc_seq(fft_size, root), [], 1);
     
     % Figure out how many guard carriers there should be (purposely ignoring DC here)
     guard_carriers = fft_size - 600;
@@ -39,7 +37,9 @@ function [samples] = create_zc(fft_size, symbol_index)
 
     % Null out the DC carrier
     samples_freq(fft_size/2) = 0;
+
+    samples_freq
     
     % Convert to time domain making sure to flip the spectrum left to right first
-    samples = ifft(fftshift(samples_freq));
+    samples = ifft(fftshift(samples_freq)) / fft_size;
 end
