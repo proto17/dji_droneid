@@ -155,6 +155,10 @@ for burst_idx=1:size(bursts, 1)
         plot(data_carriers, 'o');
         ylim([-1, 1]);
         xlim([-1, 1]);
+
+        figure(111);
+        subplot(3, 3, idx);
+        plot(10 * log10(abs(time_domain_symbols(idx,:)).^2), '-');
     end
     
     % Save the constellation plots to disk for debugging
