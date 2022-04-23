@@ -149,7 +149,7 @@ for burst_idx=1:size(bursts, 1)
     % Run the Turbo decoder and rate matcher
     [retcode, out] = system(sprintf("%s %s", turbo_decoder_path, "/tmp/bits"));
     if (retcode ~= 0)
-        error("Failed to run the final processing step");
+        warning("Failed to run the final processing step");
     end
     
     % Save off the hex values for the frame
