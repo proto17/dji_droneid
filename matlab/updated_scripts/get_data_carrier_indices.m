@@ -8,16 +8,17 @@ function [indices] = get_data_carrier_indices(sample_rate)
     
     % DroneID uses 600 carriers
     data_carrier_count = 600;
+    
+    % Define the location of the DC carrier (which is not used as a data carrier)
+    dc = (fft_size / 2) + 1;
 
-    % The left side has one more guard carrier than the right
-    left_guards = ((fft_size - data_carrier_count) / 2);
-    right_guards = left_guards - 1;
+    % Create an initial mapping of all 0's, then set then set all of the data carrier indices to 1
+    mapping = zeros(fft_size, 1);
 
-    % Create an initial mapping of all 1's, then set the guards to 0, and finally the DC carrier to 0
-    mapping = ones(fft_size, 1);
-    mapping(1:left_guards) = 0;
-    mapping(end-right_guards+1:end) = 0;
-    mapping((fft_size/2)) = 0;
+    % As an example: With an FFT size of 2048, 1025 would be DC, 725-1024 and 1026-1325 would be data carriers, and the
+    % rest would be guards
+    mapping(dc - (data_carrier_count / 2):dc - 1) = ones(data_carrier_count / 2, 1);
+    mapping(dc + 1:dc + (data_carrier_count / 2)) = ones(data_carrier_count / 2, 1);
 
     % Get the indices of `mapping` that contain a 1 value (should be all of the data carriers)
     indices = find(mapping == 1);
