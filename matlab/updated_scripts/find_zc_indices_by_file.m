@@ -71,19 +71,24 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
     % met) and pick just the highest value `search_window` elements around (`search_window/2` to the left and right) of each
     % value.  The goal here is to only end up with the best score for the starting point of each burst instead of having
     % multiple starting points for each burst.
-    true_peaks = zeros(length(passing_scores), 1);
+    true_peaks = [];
     search_window = 100;
     for idx = 1:length(passing_scores)
         % Calculate how far to the left and right to look for the highest peak
         left_idx = passing_scores(idx) - (search_window / 2);
         right_idx = left_idx + search_window - 1;
-    
+
+        if (left_idx < 0 || right_idx > length(abs_scores))
+            warning("Had to abandon searching for burst '%d' as it was too close to the end/beginning of the window", idx);
+            continue
+        end
+
         % Get the correlation scores for the samples around the current point
         window = abs_scores(left_idx:right_idx);
     
         % Find the peak in the window and use that value as the actual peak
         [value, index] = max(window);
-        true_peaks(idx) = left_idx + index;
+        true_peaks = [true_peaks, left_idx + index];
     end
     
     % There are going to be duplicates in the vector, so just take the unique elements.  What's left should just be the
