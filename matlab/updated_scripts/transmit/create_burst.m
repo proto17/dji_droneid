@@ -1,5 +1,4 @@
 sample_rate = 15.36e6;
-use_9_symbols = 0;
 show_debug_plots = 0;
 
 %% Build payload
@@ -66,13 +65,15 @@ encoded_bits = reshape(encoded_bits, [], 6).';
 % Initial value for the second LFSR in the scrambler
 scrambler_x2_init = fliplr([0 0 1, 0 0 1 0, 0 0 1 1, 0 1 0 0, 0 1 0 1, 0 1 1 0, 0 1 1 1, 1 0 0 0]);
 
+% Create scrambler for all data bits and reshape so that each OFDM symbol has a row
 scrambler = uint8(reshape(generate_scrambler_seq(7200, scrambler_x2_init), [], 6).');
 
+encoded_bits = [scrambler(1,:); encoded_bits];
+
+% Apply the scrambler to each OFDM symbol's data bits
 for idx=1:6
-    encoded_bits(idx,:) = bitxor(encoded_bits(idx,:), scrambler(idx,:));
+    encoded_bits(idx+1,:) = bitxor(encoded_bits(idx+1,:), scrambler(idx,:));
 end
-
-
 
 
 %% OFDM Symbol Creation Setup
@@ -89,6 +90,7 @@ fft_size = get_fft_size(sample_rate);
 
 % Define the size of each symbols cyclic prefix
 cyclic_prefix_schedule = [
+    long_cp_len, ...
     short_cp_len, ...
     short_cp_len, ...
     short_cp_len, ...
@@ -105,13 +107,13 @@ data_carrier_count = 600;
 %% Bits to Symbol Mapping
 
 % Create the QPSK samples for each OFDM symbol
-symbol_data = zeros(8, data_carrier_count);
+symbol_data = zeros(9, data_carrier_count);
 
 encoded_bits_ptr = 1;
-for symbol_idx=1:8
-    % There's no work to be done for symbols 3 and 5 as they are ZC sequences
-    if (symbol_idx == 3)
-    elseif (symbol_idx == 5)
+for symbol_idx=1:9
+    % There's no work to be done for symbols 4 and 6 as they are ZC sequences
+    if (symbol_idx == 4)
+    elseif (symbol_idx == 6)
     else
         % Convert from bits to QPSK constellation
         symbol_data(symbol_idx,:) = to_qpsk(encoded_bits(encoded_bits_ptr,:));
@@ -127,21 +129,12 @@ end
 
 %% Frequency Domain Symbol Creation
 % Create the frequency domain representation of each OFDM symbol
-freq_domain_symbols = zeros(8, fft_size);
+freq_domain_symbols = zeros(9, fft_size);
 
 % Get the carriers that will contain the QPSK samples
 data_carrier_indices = get_data_carrier_indices(sample_rate);
 
-% Figure out how many guard carriers there should be (purposely ignoring DC here)
-guard_carriers = fft_size - data_carrier_count;
-
-% The left side will end up with one more guard than the right
-% This may not be correct as it's a guess and the other way around failed to correlate
-% as well as this way.
-left_guards = (guard_carriers / 2);
-right_guards = (guard_carriers / 2) - 1;
-
-for symbol_idx=1:8
+for symbol_idx=1:9
     % Copy the freq domain samples to the buffer
     freq_domain_symbols(symbol_idx,data_carrier_indices) = symbol_data(symbol_idx,:);
 
@@ -158,9 +151,9 @@ end
 
 %% Time Domain Symbol Creation
 % Create the time domain representation of each OFDM symbol (no cyclic prefix at this point)
-time_domain_symbols = zeros(8, fft_size);
+time_domain_symbols = zeros(9, fft_size);
 
-for symbol_idx=1:8
+for symbol_idx=1:9
     time_domain_symbols(symbol_idx,:) = ifft(fftshift(freq_domain_symbols(symbol_idx,:)));
     
     if (show_debug_plots)
@@ -170,11 +163,11 @@ for symbol_idx=1:8
     end
 end
 
-time_domain_symbols(3,:) = create_zc(fft_size, 4);
-time_domain_symbols(5,:) = create_zc(fft_size, 6);
+time_domain_symbols(4,:) = create_zc(fft_size, 4);
+time_domain_symbols(6,:) = create_zc(fft_size, 6);
 
 time_domain = [];
-for symbol_idx=1:8
+for symbol_idx=1:9
     cp_len = cyclic_prefix_schedule(symbol_idx);
     symbol = time_domain_symbols(symbol_idx,:);
     cp = symbol(end-cp_len+1:end);
