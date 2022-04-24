@@ -72,6 +72,11 @@ for burst_idx=1:size(bursts, 1)
     % Get the next burst
     burst = bursts(burst_idx,:);
 
+    if (enable_plots)
+        figure(43);
+        plot(10 * log10(abs(burst).^2));
+    end
+
     %% Apply low pass filter
     burst = filter(filter_taps, 1, burst);
 
@@ -93,6 +98,14 @@ for burst_idx=1:size(bursts, 1)
     % Calculate the frequency offset by taking the dot product of the two copies of the cyclic prefix and dividing out
     % the number of samples in between each cyclic prefix sample (the FFT size)
     offset_radians = angle(dot(cp, copy)) / fft_size;
+
+    if (enable_plots)
+        figure(999);
+        plot(abs(cp).^2);
+        hold on;
+        plot(abs(copy).^2);
+        hold off;
+    end
     
     % Apply the inverse of the estimated frequency offset back to the signal
     burst = burst .* exp(1j * -offset_radians * [1:length(burst)]);
