@@ -159,13 +159,7 @@ time_domain_symbols = zeros(8, fft_size);
 
 figure(4);
 for symbol_idx=1:8
-%     if (symbol_idx == 3)
-% 
-%     elseif (symbol_idx == 5)
-% 
-%     else
-        time_domain_symbols(symbol_idx,:) = ifft(fftshift(freq_domain_symbols(symbol_idx,:)));
-%     end
+    time_domain_symbols(symbol_idx,:) = ifft(fftshift(freq_domain_symbols(symbol_idx,:)));
     
 
     subplot(3, 3, symbol_idx);
