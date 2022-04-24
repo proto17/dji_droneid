@@ -1,4 +1,4 @@
-function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_path, show_debug_plots)
+function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_path, temp_path, show_debug_plots)
     frame_bytes = create_frame_bytes(frame_configuration{:});
     
     %% Turbo encoding and rate matching
@@ -8,12 +8,19 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
     end
     
     % Where to store the files used to talk to the add_turbo binary
-    frame_bin_file = '/tmp/frame.bin';              % Will write payload bytes here
-    turbo_encoded_file = '/tmp/frame.bin.encoded';  % The add_turbo binary will create this
+    frame_bin_file = fullfile(temp_path, 'frame.bin');              % Will write payload bytes here
+    turbo_encoded_file = fullfile(temp_path, 'frame.bin.encoded');  % The add_turbo binary will create this
     
     % Write out the payload to Turbo encode and rate match
     file_handle = fopen(frame_bin_file, "w");
-    fwrite(file_handle, frame_bytes, 'uint8');
+    assert(file_handle ~= -1, 'Could not open output temp file "%s"', frame_bin_file);
+
+    try
+        fwrite(file_handle, frame_bytes, 'uint8');
+    catch
+        error('Could not write to temp file "%s"', frame_bin_file);
+    end
+
     fclose(file_handle);
     
     % Call the Turbo encoder
@@ -22,6 +29,9 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
         warning("Failed to run the Turbo encoder.  Details: %s", out);
     end
     
+    % Remove the Turbo encoder input temp file
+    delete(frame_bin_file);
+    
     % Verify that it created the expected output file
     if (~ isfile(turbo_encoded_file))
         error("Turbo encoder did not produce an output file");
@@ -29,8 +39,12 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
     
     % Read in all bytes from the encoded output file
     file_handle = fopen(turbo_encoded_file, "r");
+    assert(file_handle ~= -1, 'Could not open Turbo encoder output file "%s"', turbo_encoded_file);
     encoded_bits = uint8(fread(file_handle, inf, 'uint8'));
     fclose(file_handle);
+
+    % Remove the Turbo encoder output temp file
+    delete(turbo_encoded_file);
     
     % Make sure that there are exactly the right number of bytes in the file created by the Turbo encoder
     required_bytes = 7200;
@@ -55,7 +69,6 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
     for idx=1:6
         encoded_bits(idx+1,:) = bitxor(encoded_bits(idx+1,:), scrambler(idx,:));
     end
-    
     
     %% OFDM Symbol Creation Setup
     
@@ -138,15 +151,21 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
         end
     end
     
+    % Replace the contents of symbols 4 and 6 with the correct ZC sequence
     time_domain_symbols(4,:) = create_zc(fft_size, 4);
     time_domain_symbols(6,:) = create_zc(fft_size, 6);
     
-    samples = [];
+    %% Add Cyclic Prefix
+
+    samples = zeros(1, sum(cyclic_prefix_schedule) + (fft_size * length(cyclic_prefix_schedule)));
+    samples_ptr = 1;
     for symbol_idx=1:9
         cp_len = cyclic_prefix_schedule(symbol_idx);
         symbol = time_domain_symbols(symbol_idx,:);
         cp = symbol(end-cp_len+1:end);
-        samples = [samples, cp, symbol];
+        symbol_with_prefix = [cp, symbol];
+        samples(samples_ptr:samples_ptr + length(symbol_with_prefix) - 1) = symbol_with_prefix;
+        samples_ptr = samples_ptr + length(symbol_with_prefix);
     end
     
     if (show_debug_plots)
