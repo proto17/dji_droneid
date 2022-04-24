@@ -25,20 +25,17 @@ function [samples] = create_zc(fft_size, symbol_index)
     % The logic below was tested against the MATLAB function
     zc = reshape(exp(-1j * pi * root * (0:600) .* (1:601) / 601), [], 1);
     
-    % Figure out how many guard carriers there should be (purposely ignoring DC here)
-    guard_carriers = fft_size - 600;
+    % Remove the middle value (this would be DC in the FFT)
+    zc(301) = [];
 
-    % The left side will end up with one more guard than the right
-    % This may not be correct as it's a guess and the other way around failed to correlate
-    % as well as this way.
-    left_guards = (guard_carriers / 2);
-    right_guards = (guard_carriers / 2) - 1;
-    
-    % Populate all of the FFT bins with the ZC sequence in the middle (including the DC carrier)
-    samples_freq = [zeros(left_guards, 1); zc; zeros(right_guards, 1)];
+    % Create a buffer to hold the freq domain carriers
+    samples_freq = zeros(fft_size, 1);
 
-    % Null out the DC carrier
-    samples_freq(fft_size/2) = 0;
+    % Get which FFT bins should be used for data carriers
+    data_carrier_indices = get_data_carrier_indices(fft_size * 15e3);
+
+    % Assign just the data carrier bins (left to right) the ZC sequence values
+    samples_freq(data_carrier_indices) = zc;
     
     % Convert to time domain making sure to flip the spectrum left to right first
     samples = ifft(fftshift(samples_freq));

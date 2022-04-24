@@ -165,10 +165,13 @@ int main(int argc, const char ** argv) {
     const uint32_t payload_length = decoded_bytes[0] + payload_crc_byte_len + additional_payload_bytes;
     
     // Print out the frame in hex
-    for (uint32_t idx = 0; idx < payload_length; idx++) {
+    for (uint32_t idx = 0; idx < decoded_bytes.size(); idx++) {
         fprintf(stdout, "%02x", decoded_bytes[idx]);
     }
     fprintf(stdout, "\n");
     
+    free_tdec(turbo_decoder);
+    lte_rate_matcher_free(rate_matcher);
+
     return 0;
 }

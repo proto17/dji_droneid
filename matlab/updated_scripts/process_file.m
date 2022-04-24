@@ -27,6 +27,8 @@ if (~ isfile(turbo_decoder_path))
 end
 
 %% File Parameters
+enable_plots = 0; % Set to 0 to prevent the plots from popping up
+
 file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
 file_sample_rate = 30.72e6;
 file_freq_offset = 7.5e6; % This file was not recorded with the DroneID signal centered
@@ -70,6 +72,11 @@ for burst_idx=1:size(bursts, 1)
     % Get the next burst
     burst = bursts(burst_idx,:);
 
+    if (enable_plots)
+        figure(43);
+        plot(10 * log10(abs(burst).^2));
+    end
+
     %% Apply low pass filter
     burst = filter(filter_taps, 1, burst);
 
@@ -85,12 +92,20 @@ for burst_idx=1:size(bursts, 1)
         coarse_cfo_symbol_sample_offset + coarse_cfo_symbol_cyclic_prefix - 1);
 
     copy = burst(...
-        coarse_cfo_symbol_sample_offset + fft_size + 1:...
-        coarse_cfo_symbol_sample_offset + fft_size + 1 + coarse_cfo_symbol_cyclic_prefix - 1);
+        coarse_cfo_symbol_sample_offset + fft_size:...
+        coarse_cfo_symbol_sample_offset + fft_size + coarse_cfo_symbol_cyclic_prefix - 1);
     
     % Calculate the frequency offset by taking the dot product of the two copies of the cyclic prefix and dividing out
     % the number of samples in between each cyclic prefix sample (the FFT size)
     offset_radians = angle(dot(cp, copy)) / fft_size;
+
+    if (enable_plots)
+        figure(999);
+        plot(abs(cp).^2);
+        hold on;
+        plot(abs(copy).^2);
+        hold off;
+    end
     
     % Apply the inverse of the estimated frequency offset back to the signal
     burst = burst .* exp(1j * -offset_radians * [1:length(burst)]);
@@ -100,29 +115,69 @@ for burst_idx=1:size(bursts, 1)
     % Extract the individual OFDM symbols without the cyclic prefix for both time and frequency domains
     [time_domain_symbols, freq_domain_symbols] = extract_ofdm_symbol_samples(burst, file_sample_rate);
     
-    % Calculate the channel based on the first ZC sequence which is in OFDM symbol #4
-    channel = calculate_channel(freq_domain_symbols(4,:), file_sample_rate, 4);
+    % Calculate the channel for both of the ZC sequnces
+    channel1 = calculate_channel(freq_domain_symbols(4,:), file_sample_rate, 4);
+    channel2 = calculate_channel(freq_domain_symbols(6,:), file_sample_rate, 6);
+
+    % Only select the data carriers from each channel estimate
+    channel1 = channel1(data_carrier_indices);
+    channel2 = channel2(data_carrier_indices);
+    
+    % Calculate the average phase offset of each channel estimate
+    channel1_phase = sum(angle(channel1)) / length(data_carrier_indices);
+    channel2_phase = sum(angle(channel2)) / length(data_carrier_indices);
+    
+    % This doesn't seem right, but taking the difference of the two channels and dividing by two yields the average
+    % walking phase offset between the two.  That value can be used to correct for the phase offsets caused by not being
+    % exactly spot on with the true first sample
+    channel_phase_adj = (channel1_phase - channel2_phase) / 2;
+
+    if (enable_plots)
+        figure(441);
+        subplot(2, 1, 1);
+        plot(abs(channel1).^2, '-');
+        subplot(2, 1, 2);
+        plot(abs(channel2).^2, '-');
+    end
+
+    % Only use the fisrt ZC sequence to do the initial equaliztion.  Trying to use the average of both ends up with
+    % strange outliers in the constellation plot
+    channel = channel1;
 
     % Place to store the demodulated bits
     bits = zeros(9, 1200);
 
     % Walk through each OFDM symbol and extract the data carriers and demodulate the QPSK inside
     % This is done for symbols 4 and 6 even though they contain ZC sequences.  It's just to keep the logic clean
-    figure(1);
+    
     for idx=1:size(bits, 1)
-        % Equalize *all* carriers (not just data) with the channel taps
-        equalized = freq_domain_symbols(idx,:) .* channel;
+        % Equalize just the data carriers
+        data_carriers = freq_domain_symbols(idx,data_carrier_indices) .* channel;
 
-        % Extract just the data carriers (ignoring the guards and DC)
-        data_carriers = equalized(data_carrier_indices);
+        % Adjust for the walking phase offset that will be present if the first time domain sample wasn't sampled at
+        % just the right moment (fractional time offset).  If there is any fractional time offset then in the freq
+        % domain there will be a phase offset that accumulates at each FFT bin.  This causes a smearing that can be
+        % fixed by the channel estimation, but because there are no pilots the absolute phase is only correct for the
+        % OFDM symbols next to the symbol used for equalization.  So, the absolute phase offset caused by the fractional
+        % time offset is adjusted by multiplying the phase offset by how far each OFDM symbol is from the one that was
+        % used to do equalization.  Using symbol 5 because it's in the middle of the two ZC sequences, and so whatever
+        % phase offset was calculated between the two ZC's applies directly to OFDM symbol 5.
+        data_carriers = data_carriers .* exp(1j * (-channel_phase_adj * (idx - 5)));
 
         % Demodulate/quantize the QPSK to bits
         bits(idx,:) = quantize_qpsk(data_carriers);
-
-        subplot(3, 3, idx);
-        plot(data_carriers, 'o');
-        ylim([-1, 1]);
-        xlim([-1, 1]);
+        
+        if (enable_plots)
+            figure(1);
+            subplot(3, 3, idx);
+            plot(data_carriers, 'o');
+            ylim([-1, 1]);
+            xlim([-1, 1]);
+    
+            figure(111);
+            subplot(3, 3, idx);
+            plot(10 * log10(abs(time_domain_symbols(idx,:)).^2), '-');
+        end
     end
     
     % Save the constellation plots to disk for debugging
@@ -149,7 +204,7 @@ for burst_idx=1:size(bursts, 1)
     % Run the Turbo decoder and rate matcher
     [retcode, out] = system(sprintf("%s %s", turbo_decoder_path, "/tmp/bits"));
     if (retcode ~= 0)
-        error("Failed to run the final processing step");
+        warning("Failed to run the final processing step");
     end
     
     % Save off the hex values for the frame
