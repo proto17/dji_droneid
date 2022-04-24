@@ -27,6 +27,8 @@ if (~ isfile(turbo_decoder_path))
 end
 
 %% File Parameters
+enable_plots = 0; % Set to 0 to prevent the plots from popping up
+
 file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
 file_sample_rate = 30.72e6;
 file_freq_offset = 7.5e6; % This file was not recorded with the DroneID signal centered
@@ -117,11 +119,13 @@ for burst_idx=1:size(bursts, 1)
     % exactly spot on with the true first sample
     channel_phase_adj = (channel1_phase - channel2_phase) / 2;
 
-    figure(441);
-    subplot(2, 1, 1);
-    plot(abs(channel1).^2, '-');
-    subplot(2, 1, 2);
-    plot(abs(channel2).^2, '-');
+    if (enable_plots)
+        figure(441);
+        subplot(2, 1, 1);
+        plot(abs(channel1).^2, '-');
+        subplot(2, 1, 2);
+        plot(abs(channel2).^2, '-');
+    end
 
     % Only use the fisrt ZC sequence to do the initial equaliztion.  Trying to use the average of both ends up with
     % strange outliers in the constellation plot
@@ -150,15 +154,17 @@ for burst_idx=1:size(bursts, 1)
         % Demodulate/quantize the QPSK to bits
         bits(idx,:) = quantize_qpsk(data_carriers);
         
-        figure(1);
-        subplot(3, 3, idx);
-        plot(data_carriers, 'o');
-        ylim([-1, 1]);
-        xlim([-1, 1]);
-
-        figure(111);
-        subplot(3, 3, idx);
-        plot(10 * log10(abs(time_domain_symbols(idx,:)).^2), '-');
+        if (enable_plots)
+            figure(1);
+            subplot(3, 3, idx);
+            plot(data_carriers, 'o');
+            ylim([-1, 1]);
+            xlim([-1, 1]);
+    
+            figure(111);
+            subplot(3, 3, idx);
+            plot(10 * log10(abs(time_domain_symbols(idx,:)).^2), '-');
+        end
     end
     
     % Save the constellation plots to disk for debugging
