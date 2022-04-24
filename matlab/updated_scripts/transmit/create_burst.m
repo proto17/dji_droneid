@@ -2,12 +2,10 @@ sample_rate = 15.36e6;
 show_debug_plots = 0;
 
 %% Build payload
-% The `vars` definition is not in here as it contains location information used for testing.  You will need to fill in
-% your own config here.
 % Example: 
 %   create_frame_bytes('SequenceNumber', uint16(1234), ...
 %                      'SerialNumber', '!this is a test!');
-frame_bytes = create_frame_bytes(vars{:});
+frame_bytes = create_frame_bytes('SerialNumber', '!this is a test!');
 
 %% Turbo encoding and rate matching
 
