@@ -172,22 +172,6 @@ for symbol_idx=1:8
     plot(10 * log10(abs(time_domain_symbols(symbol_idx,:)).^2))
 end
 
-modulator = comm.OFDMModulator('FFTLength', fft_size, 'NumGuardBandCarriers', [212; 211], 'NumSymbols', 8, ...
-    'InsertDCNull', true, 'CyclicPrefixLength', cyclic_prefix_schedule);
-t = reshape(symbol_data.', [], 8);
-modulator_out = modulator(t);
-
-offset = 1;
-for symbol_idx=1:8
-    figure(5);
-    subplot(3, 3, symbol_idx);
-    symbol = modulator_out(offset:offset + fft_size - 1);
-    plot(10 * log10(abs(symbol).^2));
-    offset = offset + fft_size;
-
-    figure(6);
-    subplot(3, 3, symbol_idx);
-    plot(abs(symbol - reshape(time_domain_symbols(symbol_idx,:), [], 1)).^2);
 end
 
 time_domain_symbols(3,:) = create_zc(fft_size, 4);
@@ -204,7 +188,6 @@ end
 % time_domain = reshape(time_domain_symbols.', 1, []);
 time_domain = awgn([zeros(1, 10000), time_domain, zeros(1, 10000)], 1000);
 
-modulator_out = awgn([zeros(10000, 1); modulator_out; zeros(10000, 1)], 100);
 write_complex_floats('/tmp/burst.fc32', time_domain);
 
 figure(7);
