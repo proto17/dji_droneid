@@ -142,8 +142,14 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
     time_domain_symbols = zeros(9, fft_size);
     
     for symbol_idx=1:9
-        time_domain_symbols(symbol_idx,:) = ifft(fftshift(freq_domain_symbols(symbol_idx,:)));
+        % Move to the time domain
+        samples = ifft(fftshift(freq_domain_symbols(symbol_idx,:)));
+
+        % Normalize the output of the FFT
+        samples = samples / fft_size;
         
+        time_domain_symbols(symbol_idx,:) = samples;
+
         if (show_debug_plots)
             figure(4);
             subplot(3, 3, symbol_idx);
@@ -152,8 +158,8 @@ function [samples] = create_burst(sample_rate, frame_configuration, add_turbo_pa
     end
     
     % Replace the contents of symbols 4 and 6 with the correct ZC sequence
-    time_domain_symbols(4,:) = create_zc(fft_size, 4);
-    time_domain_symbols(6,:) = create_zc(fft_size, 6);
+    time_domain_symbols(4,:) = create_zc(fft_size, 4) / fft_size;
+    time_domain_symbols(6,:) = create_zc(fft_size, 6) / fft_size;
     
     %% Add Cyclic Prefix
 
