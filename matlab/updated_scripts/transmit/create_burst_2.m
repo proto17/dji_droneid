@@ -185,8 +185,7 @@ for symbol_idx=1:8
     time_domain = [time_domain, cp, symbol];
 end
 
-% time_domain = reshape(time_domain_symbols.', 1, []);
-time_domain = awgn([zeros(1, 10000), time_domain, zeros(1, 10000)], 1000);
+time_domain = awgn([zeros(1, 10000), time_domain, zeros(1, 10000)], 60);
 
 write_complex_floats('/tmp/burst.fc32', time_domain);
 
