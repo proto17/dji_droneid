@@ -87,8 +87,8 @@ for burst_idx=1:size(bursts, 1)
         coarse_cfo_symbol_sample_offset + coarse_cfo_symbol_cyclic_prefix - 1);
 
     copy = burst(...
-        coarse_cfo_symbol_sample_offset + fft_size + 1:...
-        coarse_cfo_symbol_sample_offset + fft_size + 1 + coarse_cfo_symbol_cyclic_prefix - 1);
+        coarse_cfo_symbol_sample_offset + fft_size:...
+        coarse_cfo_symbol_sample_offset + fft_size + coarse_cfo_symbol_cyclic_prefix - 1);
     
     % Calculate the frequency offset by taking the dot product of the two copies of the cyclic prefix and dividing out
     % the number of samples in between each cyclic prefix sample (the FFT size)
