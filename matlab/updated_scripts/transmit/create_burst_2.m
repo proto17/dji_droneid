@@ -1,5 +1,6 @@
 sample_rate = 15.36e6;
 use_9_symbols = 0;
+show_debug_plots = 0;
 
 %% Build payload
 % The `vars` definition is not in here as it contains location information used for testing.  You will need to fill in
@@ -117,10 +118,11 @@ for symbol_idx=1:8
         encoded_bits_ptr = encoded_bits_ptr + 1;
     end
 
-    % Debug plotting.  Can be removed
-    figure(1);
-    subplot(3, 3, symbol_idx);
-    plot(symbol_data(symbol_idx,:), 'o');
+    if (show_debug_plots)
+        figure(1);
+        subplot(3, 3, symbol_idx);
+        plot(symbol_data(symbol_idx,:), 'o');
+    end
 end
 
 %% Frequency Domain Symbol Creation
@@ -143,29 +145,29 @@ for symbol_idx=1:8
     % Copy the freq domain samples to the buffer
     freq_domain_symbols(symbol_idx,data_carrier_indices) = symbol_data(symbol_idx,:);
 
-    % Debug plotting.  Can be removed
-    figure(2);
-    subplot(3, 3, symbol_idx);
-    plot(abs(freq_domain_symbols(symbol_idx,:)).^2);
-
-    figure(3);
-    subplot(3, 3, symbol_idx);
-    plot(freq_domain_symbols(symbol_idx,:), 'o');
+    if (show_debug_plots)
+        figure(2);
+        subplot(3, 3, symbol_idx);
+        plot(abs(freq_domain_symbols(symbol_idx,:)).^2);
+    
+        figure(3);
+        subplot(3, 3, symbol_idx);
+        plot(freq_domain_symbols(symbol_idx,:), 'o');
+    end
 end
 
 %% Time Domain Symbol Creation
 % Create the time domain representation of each OFDM symbol (no cyclic prefix at this point)
 time_domain_symbols = zeros(8, fft_size);
 
-figure(4);
 for symbol_idx=1:8
     time_domain_symbols(symbol_idx,:) = ifft(fftshift(freq_domain_symbols(symbol_idx,:)));
     
-
-    subplot(3, 3, symbol_idx);
-    plot(10 * log10(abs(time_domain_symbols(symbol_idx,:)).^2))
-end
-
+    if (show_debug_plots)
+        figure(4);
+        subplot(3, 3, symbol_idx);
+        plot(10 * log10(abs(time_domain_symbols(symbol_idx,:)).^2))
+    end
 end
 
 time_domain_symbols(3,:) = create_zc(fft_size, 4);
@@ -182,10 +184,11 @@ end
 time_domain = awgn([zeros(1, 10000), time_domain, zeros(1, 10000)], 60);
 
 write_complex_floats('/tmp/burst.fc32', time_domain);
-
-figure(7);
-plot(10 * log10(abs(time_domain).^2));
-
-filter_out = filter(conj(create_zc(fft_size, 4)), 1, time_domain);
-figure(8);
-plot(abs(filter_out).^2);
+if (show_debug_plots)
+    figure(7);
+    plot(10 * log10(abs(time_domain).^2));
+    
+    filter_out = filter(conj(create_zc(fft_size, 4)), 1, time_domain);
+    figure(8);
+    plot(abs(filter_out).^2);
+end
