@@ -134,7 +134,7 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
         left_idx = passing_scores(idx) - (search_window / 2);
         right_idx = left_idx + search_window - 1;
 
-        if (left_idx < 0 || right_idx > length(abs_scores))
+        if (left_idx < 1 || right_idx > length(abs_scores))
             warning("Had to abandon searching for burst '%d' as it was too close to the end/beginning of the window", idx);
             continue
         end
