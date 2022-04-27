@@ -29,6 +29,7 @@ end
 %% File Parameters
 enable_plots = 0; % Set to 0 to prevent the plots from popping up
 
+sample_type = 'single';
 file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
 file_sample_rate = 30.72e6;
 file_freq_offset = 7.5e6; % This file was not recorded with the DroneID signal centered
