@@ -6,5 +6,5 @@
 % @return samples Column vector of `sample_count` complex samples (might be less if not enough samples are avilable
 %                 in the provided file
 function [samples] = read_complex_floats(file_path, sample_offset, sample_count)
-    samples = read_complex(file_path, sample_offset, sample_count, 'single');
+    samples = double(read_complex(file_path, sample_offset, sample_count, 'single'));
 end
