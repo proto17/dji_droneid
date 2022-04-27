@@ -47,7 +47,7 @@ fft_size = get_fft_size(file_sample_rate);
 
 % Making sure that the bursts that are extracted have enough padding for the low pass filter to start up and terminate
 bursts = extract_bursts_from_file(file_path, file_sample_rate, file_freq_offset, correlation_threshold, chunk_size,...
-    filter_tap_count);
+    filter_tap_count, 'SampleType', sample_type, 'CorrelationFigNum', 456);
 
 assert(~isempty(bursts), "Did not find any bursts");
 

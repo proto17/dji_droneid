@@ -1,42 +1,97 @@
-% This script only works for MATLAB right now.  Octave doesn't like something around the filtering section :(
+% Find all instances of the first ZC sequence in the provided file.  Does not have to read the entire file in at once
+%
+% Uses a cross correlator to search for the first ZC sequence in DroneID.
+%
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!  There is currently a bug in this script!  The correlation results are NOT normalized and might require the    !!!
+% !!!  the user to greatly increase or decrease the correlation threshold past the expected range of 0.0 - 1.0       !!!
+% !!!  In the code below there is a plotting function that is disabled by default.  Enabling it will plot the        !!!
+% !!!  correlation results so that you can better set the correlation treshold.                                      !!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%
+% Varags:
+%   - SampleType: MATLAB numeric type that the samples in the provided file are stored as (ex: 'single', 'int16', etc)
+%                 Defaults to 'single'
+%   - CorrelationFigNum: Figure number to use when plotting the correlation results.  Defaults to not showing the
+%                        correlation results at all.  Must be > 0 to show the plot, or -1 to disable
+%
+% @param file_path Path to the complex IQ file to be processed
+% @param sample_rate Sample rate that the input file was recorded at
+% @param frequency_offset Amount of offset (in Hz, positive or negative) that the recording needs to be shifted by
+%                         before processing the samples.  This is useful when the recording was taken at an offset to
+%                         remove the DC spike
+% @param correlation_threshold Minimum correlation magnitude required to classify a score as containing a valid ZC
+%                              sequence.  Should be between 0.0 and 1.0.  Frequency offset (not accounted for by the
+%                              `frequency_offset` parameter) and low SNR can cause this value to need to be set lower
+%                              than normal.  A good starting value is 0.5
+% @param chunk_size Number of complex IQ samples to read into memory at a time.  Set this value as high as you can
+%                   without running out of memory.  The larger this buffer the faster the file will be processed
+% @param varargin (see above)
+% @return zc_indices A row vector containing the samples offsets where correlation scores were seen at or above the
+%                    specified threshold
+function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequency_offset, correlation_threshold, ...
+    chunk_size, varargin)
 
-%% Signal parameters
-% file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
-% file_sample_rate = 30.72e6;     % Collected 2x oversampled
-% rough_frequency_offset = 7.5e6; % The collected signal is 7.5 MHz off center
-% correlation_threshold = 0.7;    % Minimum correlation score to accept (0.0 - 1.0)
+    assert(isstring(file_path) || ischar(file_path), "Input file path must be a string or char array");
+    assert(isnumeric(sample_rate), "Sample rate must be numeric");
+    assert(sample_rate > 0, "Sample rate must be > 0")
+    assert(isnumeric(frequency_offset), "Frequency offset must be numeric");
+    assert(isnumeric(correlation_threshold), "Correlation threshold must be numeric");
+    assert(isnumeric(chunk_size), "Chunk size must be numeric");
+    assert(chunk_size > 0, "Chunk size must be > 0");
+    assert(mod(length(varargin), 2) == 0, "Varargs length must be a multiple of 2");
+    
+    sample_type = 'single';
+    correlation_fig_num = -1;
 
+    for idx=1:2:length(varargin)
+        key = varargin{idx};
+        val = varargin{idx+1};
 
-function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequency_offset, correlation_threshold, chunk_size)
+        switch (key)
+            case 'SampleType'
+                sample_type = val;
+            case 'CorrelationFigNum'
+                correlation_fig_num = val;
+            otherwise
+                error('Invalid varargs key "%s"', key);
+        end
+    end
+
+    assert(ischar(sample_type) || isstring(sample_type), "SampleType must be a string or char array");
+    assert(isnumeric(correlation_fig_num), "CorrelationFigNum must be numeric");
+    assert(correlation_fig_num == -1 || correlation_fig_num > 0, "CorrelationFigNum must be -1, or > 0");
+
     %% LTE parameters
-    carrier_spacing = 15e3;
+    fft_size = get_fft_size(sample_rate);
     
     % Pre-calculate the frequency offset rotation
     freq_offset_constant = 1j * pi * 2 * (frequency_offset / sample_rate);
     
     % The output of the ZC sequence generator needs to be conjugated to be used in a filter.  Also create a variable that
     % can hold the filter state between chunks to prevent discontinuities
-    correlator_taps = conj(create_zc(sample_rate / carrier_spacing, 4));
+    correlator_taps = conj(create_zc(fft_size, 4));
     correlator_state = [];
+    
+    % Figure out how many samples there are in the file
+    total_samples = get_sample_count_of_file(file_path, sample_type);
+    fprintf('There are %d samples in "%s"\n', total_samples, file_path);
     
     % Open the IQ recording
     file_handle = fopen(file_path, 'r');
-    
-    % Figure out how many samples there are in the file
-    fseek(file_handle, 0, 'eof');
-    total_samples = ftell(file_handle) / 4 / 2; % 4 bytes per float, 2 floats per complex sample
-    fseek(file_handle, 0, 'bof');
-    fprintf('There are %d samples in "%s"\n', total_samples, file_path);
-    
+
     % Really large array to store the cross correlation results from *all* samples
     zc_scores = zeros(total_samples - length(correlator_taps), 1);
     
     sample_offset = 0;
     while (~ feof(file_handle))    
         %% Read in the next buffer
-        % The `fread` command will return interleaved real, imag values, so pack those into complex samples
-        floats = fread(file_handle, chunk_size * 2, 'float');
-        samples = floats(1:2:end) + 1j * floats(2:2:end);
+        % The `fread` command will return interleaved real, imag values, so pack those into complex samples making sure
+        % that the resulting complex values are double precision (this is to prevent functions from complaining later)
+        real_values = fread(file_handle, chunk_size * 2, sample_type);
+        samples = double(real_values(1:2:end) + 1j * real_values(2:2:end));
         
         %% Frequency shift the input
         % This is somewhat optional, but the correlation scores will go down fast if the offset is > 1 MHz
@@ -44,8 +99,7 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
         samples = samples .* reshape(rotation_vector, [], 1);
         
         %% Correlate for the ZC sequence
-        % Use a FIR filter to search for the ZC sequence.  The resulting values will be normalized to between 0 and 1.0 if
-        % the abs^2 is taken
+        % Use a FIR filter to search for the ZC sequence.  THIS WILL NOT NORMALIZE!!!
         % TODO(9April2022): Would be nice to use the fftfilt function, but I don't know if it has issues with keeping state
         %                   as it doesn't have a state input like the filter command.  In testing the FFT filter is twice 
         %                   as fast
@@ -58,9 +112,11 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
     % Get the floating normalized correlation results
     abs_scores = abs(zc_scores).^2;
     
-%     figure(1); 
-%     plot(abs_scores);
-%     title('Correlation Scores (normalized)')
+    if (correlation_fig_num > 0)
+        figure(correlation_fig_num); 
+        plot(abs_scores);
+        title('Correlation Scores (normalized)')
+    end
     
     % Find all places where the correlation result meets the specified threshold
     % This is going to find duplicates because there are very likely going to be two points right next to each other that
