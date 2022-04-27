@@ -91,7 +91,8 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     % samples.  So, as filthy as it is, use concatenation to build up a list of starting indices that will definitely
     % have all samples present in the input file
     valid_burst_indices = [];
-
+    
+    % Walk through the vector of ZC sequence indices
     for idx=1:length(indices)
         start_index = indices(idx);
         
@@ -105,6 +106,7 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
             continue
         end
         
+        % Make sure that the burst is fully contained in this file and doesn't end after this file ends
         if (actual_end_index > num_samples)
             warning("Skipping burst at offset %d as the ending of the burst will be clipped", start_index);
             continue
