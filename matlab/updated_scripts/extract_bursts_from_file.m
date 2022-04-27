@@ -120,8 +120,10 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     bursts = zeros(length(valid_burst_indices), burst_sample_count);
 
     for idx=1:length(valid_burst_indices)
-        % Read in the current burst.  The starting index was calculated above
-        burst = read_complex_floats(input_path, valid_burst_indices(idx), burst_sample_count);
+        % Read in the current burst.  The starting index was calculated above.  Force cast to a double just in case the
+        % samples were not read in as such.  Otherwise processing that happens later on could fail since much of
+        % MATLAB's DSP functions require doubles
+        burst = double(read_complex(input_path, valid_burst_indices(idx), burst_sample_count, sample_type));
         
         % Adjust for the user-specified frequency offset that is present in the recording and save those samples off
         bursts(idx,:) = burst .* freq_offset_vec;
