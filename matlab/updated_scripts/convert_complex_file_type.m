@@ -25,14 +25,7 @@ function [sample_count] = convert_complex_file_type(input_file_path, input_type,
     output_file_handle = fopen(output_file_path, 'w');
     assert(output_file_handle ~= -1, 'Could not open output file "%s" for writing', output_file_path);
 
-    % Get the number of bytes in each I and Q value for the input and output
-    input_file_sample_type_ex = cast(1, input_type);
-    input_file_sample_type_info = whos('input_file_sample_type_ex');
-    input_file_sample_bytes = input_file_sample_type_info.bytes;
-
-    output_file_sample_type_ex = cast(1, output_type);
-    output_file_sample_type_info = whos('output_file_sample_type_ex');
-    output_file_sample_bytes = output_file_sample_type_info.bytes;
+    input_file_sample_bytes = get_bytes_per_sample(input_type);
 
     % How many samples to work on at a time.  Keep this value as high as possible to reduce runtime.  But, don't go
     % crazy with it as it will plow through RAM
