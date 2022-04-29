@@ -62,6 +62,9 @@ function [scores] = normalized_xcorr_fast(input_samples, filter, varargin)
         % Since the window is shifting to the right, subtract off the left-most value that was just removed and add
         % on the new value on the right
         running_sum = running_sum - prev_val + window(end);
+        
+        % The value that will be removed on the next iteration is the left-most value of the current window
+        prev_val = window(1);
 
         % Make the window zero mean by subtracting the average power 
         window = window - (running_sum * recip_window_size);
