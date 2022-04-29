@@ -52,8 +52,13 @@ function [scores] = normalized_xcorr_fast(input_samples, filter, varargin)
     % To prevent needing an if statement in the critical path, start the running sum with the first element
     % missing, and the value being removed first in the loop set to 0.  This means that on startup, the loop
     % will work properly without needing a conditional
-    running_sum = sum(input_samples(2:window_size - 1));
+    temp_window = input_samples(2:window_size - 1);
+    running_sum = sum(temp_window);
     prev_val = 0;
+
+    % The same trick above is applied to the 
+    running_abs_sqrd = sum(real(temp_window).^2 + imag(temp_window).^2);
+    running_abs_sqd_prev = 0;
 
     for idx=1:length(scores)
         % Get the next `window_size` samples starting at the current offset
@@ -71,12 +76,17 @@ function [scores] = normalized_xcorr_fast(input_samples, filter, varargin)
 
         % Compute the dot product
         prod = sum(window .* filter_conj) * recip_window_size;
+        
+        % Compute the running abs(window).^2 estimate by removing the previous left-most value, and adding on the new
+        % right-most value.  Then make the new left-most value the prev value for the next iteration
+        running_abs_sqrd = running_abs_sqrd - running_abs_sqd_prev + real(window(end)).^2 + imag(window(end)).^2;
+        running_abs_sqd_prev = real(window(1)).^2 + imag(window(1)).^2;
 
         % Get the variance of the window
-        x = sum(real(window).^2 + imag(window).^2) * recip_window_size_minus_one;
+        variance = running_abs_sqrd * recip_window_size_minus_one;
 
         % Divide the dot product result by the square root of the std deviation of both windows combined
-        scores(idx) = prod / (sqrt(x) * filter_conj_var_sqrt);
+        scores(idx) = prod / (sqrt(variance) * filter_conj_var_sqrt);
     end
 
 end
