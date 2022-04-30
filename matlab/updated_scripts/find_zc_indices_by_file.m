@@ -1,15 +1,6 @@
 % Find all instances of the first ZC sequence in the provided file.  Does not have to read the entire file in at once
 %
-% Uses a cross correlator to search for the first ZC sequence in DroneID.
-%
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!  There is currently a bug in this script!  The correlation results are NOT normalized and might require the    !!!
-% !!!  the user to greatly increase or decrease the correlation threshold past the expected range of 0.0 - 1.0       !!!
-% !!!  In the code below there is a plotting function that is disabled by default.  Enabling it will plot the        !!!
-% !!!  correlation results so that you can better set the correlation treshold.                                      !!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% Uses a normalized cross correlator to search for the first ZC sequence in DroneID.
 %
 % Varags:
 %   - SampleType: MATLAB numeric type that the samples in the provided file are stored as (ex: 'single', 'int16', etc)
@@ -70,10 +61,9 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
     % Pre-calculate the frequency offset rotation
     freq_offset_constant = 1j * pi * 2 * (frequency_offset / sample_rate);
     
-    % The output of the ZC sequence generator needs to be conjugated to be used in a filter.  Also create a variable that
-    % can hold the filter state between chunks to prevent discontinuities
-    correlator_taps = conj(create_zc(fft_size, 4));
-    correlator_state = [];
+    % The correlator will be searching for the first ZC sequence (which resides in the 4th/3rd OFDM symbol depending on
+    % which drone model is in use.)  No need to conjugate here as that will be done in the correlator
+    correlator_taps = create_zc(fft_size, 4);
     
     % Figure out how many samples there are in the file
     total_samples = get_sample_count_of_file(file_path, sample_type);
@@ -84,28 +74,55 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
 
     % Really large array to store the cross correlation results from *all* samples
     zc_scores = zeros(total_samples - length(correlator_taps), 1);
+
+    % Default to no leftover samples for the first iteration
+    leftover_samples = [];
     
     sample_offset = 0;
+    zc_scores_ptr = 1;
     while (~ feof(file_handle))    
         %% Read in the next buffer
         % The `fread` command will return interleaved real, imag values, so pack those into complex samples making sure
         % that the resulting complex values are double precision (this is to prevent functions from complaining later)
-        real_values = fread(file_handle, chunk_size * 2, sample_type);
-        samples = double(real_values(1:2:end) + 1j * real_values(2:2:end));
+        real_values = double(fread(file_handle, chunk_size * 2, sample_type));
+
+        % Don't continue processing if there aren't enough samples remaining keeping in mind that there might be some
+        % samples leftover from the last iteration of the loop
+        if ((length(real_values) / 2) + leftover_samples <= length(correlator_taps))
+            break;
+        end
+
+        % Convert from a vector of reals (I,Q,I,Q,I,Q,...) to complex
+        samples = real_values(1:2:end) + 1j * real_values(2:2:end);
         
         %% Frequency shift the input
         % This is somewhat optional, but the correlation scores will go down fast if the offset is > 1 MHz
         rotation_vector = exp(freq_offset_constant * (sample_offset:(sample_offset+length(samples)-1)));
         samples = samples .* reshape(rotation_vector, [], 1);
+
+        %% Handle unprocessed samples from last iteration
+
+        % The correlation function cannot process all samples as it looks forward in time.  So, after each iteration of
+        % this loop some samples don't get processed, and those samples are added to the `leftover_samples` vector.
+        % Those samples need to be added to the beginning of the vector of samples that were read from the file.
+        % Additionally, the leftover samples have already been frequency corrected, so they must be ignored when
+        % applying frequency correction (done above).
+        % TODO(30April2022): This isn't ideal as resizing the sample vector each time is not good for performance
+        samples = [leftover_samples; samples];
+
+        % The end of the current sample vector will be the new leftover samples for the next iteration
+        leftover_samples = samples(end - length(correlator_taps) + 1:end);
         
         %% Correlate for the ZC sequence
-        % Use a FIR filter to search for the ZC sequence.  THIS WILL NOT NORMALIZE!!!
-        % TODO(9April2022): Would be nice to use the fftfilt function, but I don't know if it has issues with keeping state
-        %                   as it doesn't have a state input like the filter command.  In testing the FFT filter is twice 
-        %                   as fast
-        [correlation_values, correlator_state] = filter(correlator_taps, 1, samples, correlator_state);
-        zc_scores(sample_offset+1:sample_offset+length(correlation_values)) = correlation_values;
+        % Run a normalized cross correlation
+        correlation_values = normalized_xcorr_fast(samples, correlator_taps);
         
+        % Not all samples in the `samples` vector were processed by the correlator, so only update the samples that were
+        % processed by using the `zc_scores_ptr` which points to where in the `zc_scores` the next values should go.
+        zc_scores(zc_scores_ptr:zc_scores_ptr+length(correlation_values)-1) = correlation_values;
+        zc_scores_ptr = zc_scores_ptr + length(correlation_values);
+        
+        % Move the sample counter forward so that the frequency offset adjustment logic works properly
         sample_offset = sample_offset + length(samples);
     end
     
