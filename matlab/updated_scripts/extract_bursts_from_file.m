@@ -76,7 +76,7 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     % The first ZC sequence is the 4th symbol, and the `find_zc_indices_by_file` function will (assuming no major
     % frequency offset) return the sample index of the first sample of the 5th OFDM symbol cyclic prefix.  So, back the
     % index off by the number of samples in the first 4 OFDM symbols and their cyclic prefixes
-    zc_seq_offset = (fft_size * 4) + long_cp_len + (short_cp_len * 3);
+    zc_seq_offset = (fft_size * 3) + long_cp_len + (short_cp_len * 3);
     
     % Find all instances of the first ZC sequence
     indices = find_zc_indices_by_file(input_path, sample_rate, frequency_offset, correlation_threshold, chunk_size, ...
