@@ -145,7 +145,8 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
     % value.  The goal here is to only end up with the best score for the starting point of each burst instead of having
     % multiple starting points for each burst.
     true_peaks = [];
-    search_window = 100;
+    search_window = 10;
+    
     for idx = 1:length(passing_scores)
         % Calculate how far to the left and right to look for the highest peak
         left_idx = passing_scores(idx) - (search_window / 2);
