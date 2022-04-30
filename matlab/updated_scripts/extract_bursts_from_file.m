@@ -36,6 +36,10 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     assert(isnumeric(padding), "Padding must be numeric");
     assert(padding >= 0, "Padding must be >= 0");
     assert(mod(length(varargin), 2) == 0, "Varargs length must be a multiple of 2");
+
+    if (correlation_threshold > 1.0)
+        warning("Correlation threshold is greater than 1.0.  This is likely going to cause the correlation to fail!");
+    end
     
     % Default the type of each I and Q value to 32-bit floating point
     sample_type = 'single';
