@@ -30,6 +30,7 @@ function [bursts] = extract_bursts_from_file(input_path, sample_rate, frequency_
     assert(sample_rate > 0, "Sample rate must be > 0")
     assert(isnumeric(frequency_offset), "Frequency offset must be numeric");
     assert(isnumeric(correlation_threshold), "Correlation threshold must be numeric");
+    assert(correlation_threshold >= 0.0, "Correlation threshold must be >= 0.0");
     assert(isnumeric(chunk_size), "Chunk size must be numeric");
     assert(chunk_size > 0, "Chunk size must be > 0");
     assert(isnumeric(padding), "Padding must be numeric");
