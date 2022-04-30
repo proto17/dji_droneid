@@ -129,6 +129,7 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
     % Get the floating normalized correlation results
     abs_scores = abs(zc_scores).^2;
     
+    % Plot if requested
     if (correlation_fig_num > 0)
         figure(correlation_fig_num); 
         plot(abs_scores);
@@ -151,7 +152,8 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
         % Calculate how far to the left and right to look for the highest peak
         left_idx = passing_scores(idx) - (search_window / 2);
         right_idx = left_idx + search_window - 1;
-
+        
+        % Move to the next index if there aren't enough samples to find the max peak
         if (left_idx < 1 || right_idx > length(abs_scores))
             warning("Had to abandon searching for burst '%d' as it was too close to the end/beginning of the window", idx);
             continue
@@ -160,8 +162,8 @@ function [zc_indices] = find_zc_indices_by_file(file_path, sample_rate, frequenc
         % Get the correlation scores for the samples around the current point
         window = abs_scores(left_idx:right_idx);
     
-        % Find the peak in the window and use that value as the actual peak
-        [value, index] = max(window);
+        % Find the index of the peak in the window and use that value as the actual peak
+        [~, index] = max(window);
         true_peaks = [true_peaks, left_idx + index];
     end
     
