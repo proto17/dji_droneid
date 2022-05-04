@@ -25,3 +25,9 @@ Some things still left to do:
 - Parse the frame to spit out something that users can actually use (maybe JSON?)
 - Create a more robust timing offset estimator (likely autocorrelating the ZC sequence(s))
 - Figure out how to deal with integer frequency offsets (currently just able to detect and correct for fractional offsets)
+
+Note 1:
+If there is a large enough frequency offset (on the order of KHz) then the cross correlation of the ZC sequence will produce a spike that's not actually at the start/end of the ZC sequence.  It will be off by some number of samples.  The issue is that the location of the spike is used to determine the start index of the burst, which will in turn determine where each OFDM symbol is assumed to start.  So, having a frequency offset will cause incorrect starting sample offsets which will completely derail the OFDM symbol extraction resulting in garbage constellations
+
+Note 2:
+The current coarse CFO estimate cannot deal with very large offsets.  It looks at the cyclic prefix of one of the OFDM symbols (second symbol for those signals with 9 symbols, first symbol for those with 8) which has a large gap between samples.  This is more useful as a fine frequency offset than coarse.  A possible alternative is to use the ZC sequence(s).  They are symmetrical about the center in the time (and probably frequency?) domain which means it should autocorrelate with itself if you reverse the second half of the correlation window.
