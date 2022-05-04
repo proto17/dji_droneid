@@ -53,7 +53,7 @@ namespace gr {
             set_msg_handler(pmt::mp("pdus"), [this](pmt::pmt_t pdu){handle_msg(pdu);});
             cfo_cp_len_ = short_cp_len_;
             cfo_buffer_.resize(cfo_cp_len_ * 2);
-//            sample_buffer_.resize((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7));
+//            sample_buffer_.resize((fft_size_ * 11) + (long_cp_len_ * 2) + (short_cp_len_ * 7));
 
             cp_lengths_ = {
                     long_cp_len_,
