@@ -4,7 +4,7 @@ category: '[droneid]'
 
 templates:
   imports: import droneid
-  make: droneid.time_sync(${sample_rate})
+  make: droneid.time_sync(${sample_rate}, ${debug_path})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -15,6 +15,10 @@ parameters:
 - id: sample_rate
   label: Sample Rate
   dtype: float
+- id: debug_path
+  label: Debug Path
+  dtype: string
+
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:

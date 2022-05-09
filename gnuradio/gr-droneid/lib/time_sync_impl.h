@@ -35,6 +35,7 @@ namespace gr {
             const uint32_t fft_size_;
             const uint32_t long_cp_len_;
             const uint32_t short_cp_len_;
+            const std::string debug_path_;
 
             size_t pdu_element_count_;
             std::vector<std::complex<float>> buffer_;
@@ -44,7 +45,7 @@ namespace gr {
             void msg_handler(const pmt::pmt_t & pdu);
 
         public:
-            time_sync_impl(double sample_rate);
+            time_sync_impl(double sample_rate, const std::string & debug_path);
 
             ~time_sync_impl();
 

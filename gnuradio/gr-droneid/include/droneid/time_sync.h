@@ -45,7 +45,7 @@ namespace gr {
        * class. droneid::time_sync::make is the public interface for
        * creating new instances.
        */
-      static sptr make(double sample_rate);
+      static sptr make(double sample_rate, const std::string & debug_path);
     };
 
   } // namespace droneid

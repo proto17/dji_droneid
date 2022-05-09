@@ -34,6 +34,7 @@ namespace gr {
             const uint32_t fft_size_;
             const uint32_t long_cp_len_;
             const uint32_t short_cp_len_;
+            const std::string debug_path_;
 
             std::unique_ptr<gr::fft::fft_complex> fft_;
             std::unique_ptr<gr::fft::fft_shift<std::complex<float>>> fft_shift_;
@@ -50,7 +51,7 @@ namespace gr {
             // Nothing to declare in this block.
 
         public:
-            demodulation_impl(double sample_rate);
+            demodulation_impl(double sample_rate, const std::string & debug_path);
 
             ~demodulation_impl();
 

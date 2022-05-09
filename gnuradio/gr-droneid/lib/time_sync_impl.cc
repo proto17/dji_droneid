@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <boost/filesystem.hpp>
+
 #include <gnuradio/io_signature.h>
 #include "time_sync_impl.h"
 #include <volk/volk.h>
@@ -32,23 +34,32 @@
 namespace gr {
     namespace droneid {
 
+        using path = boost::filesystem::path;
+
         time_sync::sptr
-        time_sync::make(double sample_rate) {
+        time_sync::make(double sample_rate, const std::string & debug_path) {
             return gnuradio::get_initial_sptr
-                    (new time_sync_impl(sample_rate));
+                    (new time_sync_impl(sample_rate, debug_path));
         }
 
 
         /*
          * The private constructor
          */
-        time_sync_impl::time_sync_impl(double sample_rate)
+        time_sync_impl::time_sync_impl(double sample_rate, const std::string & debug_path)
                 : gr::sync_block("time_sync",
                                  gr::io_signature::make(0, 0, 0),
                                  gr::io_signature::make(0, 0, 0)),
                   sample_rate_(sample_rate),
                   fft_size_(misc_utils::get_fft_size(sample_rate)), long_cp_len_(misc_utils::get_long_cp_len(sample_rate)),
-                  short_cp_len_(misc_utils::get_short_cp_len(sample_rate)) {
+                  short_cp_len_(misc_utils::get_short_cp_len(sample_rate)), debug_path_(debug_path) {
+            if (! debug_path_.empty()) {
+                const auto p = path(debug_path_);
+                if (! boost::filesystem::is_directory(p)) {
+                    boost::filesystem::create_directories(p);
+                }
+            }
+
             auto zc_sequence = misc_utils::create_zc_sequence(sample_rate_, 600);
             std::for_each(zc_sequence.begin(), zc_sequence.end(), [](std::complex<float> & sample){ sample = std::conj(sample); });
             std::reverse(zc_sequence.begin(), zc_sequence.end());
@@ -69,7 +80,10 @@ namespace gr {
             auto meta = pmt::car(pdu);
             auto vec = pmt::cdr(pdu);
             auto burst_ptr = pmt::c32vector_elements(vec, pdu_element_count_);
-            misc_utils::write_samples("/tmp/bursts/file_"+std::to_string(file_counter_), burst_ptr, pdu_element_count_);
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_)).string(), burst_ptr,
+                                          pdu_element_count_);
+            }
 
             if (buffer_.size() < pdu_element_count_) {
                 buffer_.resize(pdu_element_count_);
@@ -79,7 +93,9 @@ namespace gr {
             // Run the correlator ignoring the last `ntaps` elements so as not to walk off the end of the array
             correlator_ptr_->filterN(&buffer_[0], burst_ptr, pdu_element_count_ - correlator_ptr_->ntaps());
 
-            misc_utils::write_samples("/tmp/bursts/corr_file_"+std::to_string(file_counter_), buffer_);
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_)).string(), buffer_);
+            }
 
             // Find the max correlation peak
             // TODO: Only search through the area where the ZC is expected to be

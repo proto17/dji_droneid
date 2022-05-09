@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <boost/filesystem.hpp>
 #include <gnuradio/io_signature.h>
 #include "demodulation_impl.h"
 #include "droneid/misc_utils.h"
@@ -31,23 +32,32 @@
 
 namespace gr {
     namespace droneid {
+        using path = boost::filesystem::path;
 
         demodulation::sptr
-        demodulation::make(double sample_rate) {
+        demodulation::make(double sample_rate, const std::string & debug_path) {
             return gnuradio::get_initial_sptr
-                    (new demodulation_impl(sample_rate));
+                    (new demodulation_impl(sample_rate, debug_path));
         }
 
 
         /*
          * The private constructor
          */
-        demodulation_impl::demodulation_impl(const double sample_rate)
+        demodulation_impl::demodulation_impl(const double sample_rate, const std::string & debug_path)
                 : gr::sync_block("demodulation",
                                  gr::io_signature::make(0, 0, 0),
                                  gr::io_signature::make(0, 0, 0)),
                                  sample_rate_(sample_rate), fft_size_(misc_utils::get_fft_size(sample_rate)), long_cp_len_(
-                        misc_utils::get_long_cp_len(sample_rate)), short_cp_len_(misc_utils::get_short_cp_len(sample_rate)) {
+                        misc_utils::get_long_cp_len(sample_rate)), short_cp_len_(misc_utils::get_short_cp_len(sample_rate)),
+                        debug_path_(debug_path){
+            if (! debug_path_.empty()) {
+                const auto p = path(debug_path_);
+                if (! boost::filesystem::is_directory(p)) {
+                    boost::filesystem::create_directories(p);
+                }
+            }
+
             message_port_register_in(pmt::mp("pdus"));
             message_port_register_out(pmt::mp("pdus"));
             set_msg_handler(pmt::mp("pdus"), [this](pmt::pmt_t pdu){handle_msg(pdu);});
@@ -85,7 +95,7 @@ namespace gr {
             fft_shift_->shift(zc_);
             channel_.resize(fft_size_);
 
-            misc_utils::write_samples("/tmp/bursts/zc", zc_);
+            misc_utils::write_samples((path(debug_path_) / "zc").string(), zc_);
         }
 
         /*
@@ -146,7 +156,7 @@ namespace gr {
             /// Channel estimation and equalization
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////
             volk_32fc_x2_divide_32fc(&channel_[0],  &zc_[0], &symbols_[3][0], fft_size_);
-            misc_utils::write_samples("/tmp/bursts/channel", channel_);
+            misc_utils::write_samples((path(debug_path_) / "channel").string(), channel_);
 
             for (uint32_t symbol_idx = 0; symbol_idx < cp_lengths_.size(); symbol_idx++) {
                 for (uint32_t idx = 0; idx < fft_size_; idx++) {
