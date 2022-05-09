@@ -27,5 +27,6 @@ install(FILES
     time_sync.h
         ../../lib/utils.h
     demodulation.h
-    misc_utils.h DESTINATION include/droneid
+    misc_utils.h
+    lte_decode.h DESTINATION include/droneid
 )

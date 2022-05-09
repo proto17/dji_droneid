@@ -29,6 +29,7 @@ list(APPEND droneid_sources
     utils.cpp
     demodulation_impl.cc
     misc_utils.cc
+    lte_decode.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
@@ -39,6 +40,7 @@ endif(NOT droneid_sources)
 
 add_library(gnuradio-droneid SHARED ${droneid_sources})
 target_link_libraries(gnuradio-droneid gnuradio::gnuradio-runtime gnuradio::gnuradio-fft gnuradio::gnuradio-filter)
+target_link_libraries(gnuradio-droneid turbofec)
 target_include_directories(gnuradio-droneid
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>

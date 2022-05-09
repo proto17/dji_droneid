@@ -22,5 +22,6 @@ install(FILES
     droneid_extractor.block.yml
     droneid_time_sync.block.yml
     droneid_demodulation.block.yml
-    droneid_misc_utils.block.yml DESTINATION share/gnuradio/grc/blocks
+    droneid_misc_utils.block.yml
+    droneid_lte_decode.block.yml DESTINATION share/gnuradio/grc/blocks
 )
