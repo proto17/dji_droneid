@@ -32,6 +32,18 @@ options:
     state: enabled
 
 blocks:
+- name: debug_dir
+  id: variable
+  parameters:
+    comment: ''
+    value: '"/tmp/droneid_debug"'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [886, 71]
+    rotation: 0
+    state: true
 - name: decimation
   id: variable
   parameters:
@@ -318,12 +330,28 @@ blocks:
     coordinate: [288, 337]
     rotation: 0
     state: enabled
+- name: droneid_decode_0
+  id: droneid_decode
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1571, 721]
+    rotation: 180
+    state: true
 - name: droneid_demodulation_0
   id: droneid_demodulation
   parameters:
     affinity: ''
     alias: ''
     comment: ''
+    debug_path: debug_dir
     maxoutbuf: '0'
     minoutbuf: '0'
     sample_rate: samp_rate / decimation
@@ -356,6 +384,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
+    debug_path: debug_dir
     maxoutbuf: '0'
     minoutbuf: '0'
     sample_rate: samp_rate / decimation
@@ -525,7 +554,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1761, 649]
+    coordinate: [1810, 656]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -1004,6 +1033,7 @@ connections:
 - [blocks_file_source_0, '0', blocks_throttle_0, '0']
 - [blocks_multiply_xx_0, '0', fft_filter_xxx_0, '0']
 - [blocks_throttle_0, '0', blocks_multiply_xx_0, '0']
+- [droneid_demodulation_0, pdus, droneid_decode_0, pdus]
 - [droneid_demodulation_0, pdus, qtgui_const_sink_x_0, in]
 - [droneid_extractor_0, pdus, droneid_time_sync_0, pdus]
 - [droneid_time_sync_0, pdus, droneid_demodulation_0, pdus]
