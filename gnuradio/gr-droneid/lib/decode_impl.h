@@ -36,7 +36,7 @@ namespace gr {
 
             const std::string debug_path_;
 
-            std::vector<int8_t> qpsk_to_bits(const std::vector<gr_complex> & samples);
+            static std::vector<int8_t> qpsk_to_bits(const std::vector<gr_complex> & samples);
             // Nothing to declare in this block.
 
         public:
