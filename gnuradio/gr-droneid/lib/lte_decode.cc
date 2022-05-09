@@ -35,6 +35,7 @@ namespace gr {
             d3_.resize(TURBO_DECODER_BIT_COUNT);
 
             turbo_decoder_input_.resize(TURBO_DECODER_INPUT_BIT_COUNT);
+            decoded_bytes_.resize(EXPECTED_PAYLOAD_BYTES);
 
             rate_matcher_ = lte_rate_matcher_alloc();
             turbo_decoder_ = alloc_tdec();
@@ -45,8 +46,6 @@ namespace gr {
                     .d = {&d1_[0], &d2_[0], &d3_[0]},
                     .e = &turbo_decoder_input_[0]
             };
-
-            lte_rate_match_fw(rate_matcher_, &rate_matcher_io_, 0);
         }
 
         lte_decode::~lte_decode() {
@@ -66,10 +65,27 @@ namespace gr {
                 throw std::runtime_error(err.str());
             }
 
-            std::copy(bits.begin(), bits.end(), turbo_decoder_input_.begin());
+            int8_t bit_lut[2] = {-63, 63};
+            std::vector<int8_t> bits_copy = bits;
+            std::for_each(bits_copy.begin(), bits_copy.end(), [&](int8_t & bit){
+                bit = bit_lut[bit];
+            });
 
+            for (auto & i : bits_copy) {
+                std::cout << (short)i << " ";
+            }
+            std::cout << "\n";
+
+            std::copy(bits_copy.begin(), bits_copy.end(), turbo_decoder_input_.begin());
+            lte_rate_match_fw(rate_matcher_, &rate_matcher_io_, 0);
             const int decode_status = lte_turbo_decode(turbo_decoder_, EXPECTED_PAYLOAD_BITS, TURBO_ITERATIONS,
                              &decoded_bytes_[0], &d1_[0], &d2_[0], &d3_[0]);
+
+            fprintf(stdout, "MOO: ");
+            for (const auto & i : decoded_bytes_) {
+                fprintf(stdout, "%02x", i);
+            }
+            fprintf(stdout, "\n");
 
             if (decode_status != 0) {
                 throw std::runtime_error("Failed to remove Turbo code.  Status: " + std::to_string(decode_status));
