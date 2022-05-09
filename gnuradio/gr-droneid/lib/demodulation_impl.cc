@@ -140,7 +140,7 @@ namespace gr {
             std::cout << "Phase angle: " << angle << "\n";
 
             std::complex<float> phase = {1, 0};
-            volk_32fc_s32fc_x2_rotator_32fc(&sample_buffer_[0], samples_ptr, -angle, &phase, sample_count_);
+//            volk_32fc_s32fc_x2_rotator_32fc(&sample_buffer_[0], samples_ptr, -angle, &phase, sample_count_);
 
             const auto * symbol_ptr = samples_ptr;
             uint32_t offset = start_idx;
@@ -162,14 +162,19 @@ namespace gr {
                 misc_utils::write_samples((path(debug_path_) / "channel").string(), channel_);
             }
 
-            for (uint32_t symbol_idx = 0; symbol_idx < cp_lengths_.size(); symbol_idx++) {
-                for (uint32_t idx = 0; idx < fft_size_; idx++) {
+            std::vector<std::complex<float>> all_data_carriers;
 
+            for (uint32_t symbol_idx = 0; symbol_idx < cp_lengths_.size(); symbol_idx++) {
+                if (symbol_idx == 0 || symbol_idx == 3 || symbol_idx == 5) {
+                    continue;
                 }
+                const auto data_carriers = misc_utils::extract_data_carriers(symbols_[symbol_idx], fft_size_);
+                all_data_carriers.insert(all_data_carriers.end(), data_carriers.begin(), data_carriers.end());
+
 //                volk_32fc_x2_multiply_32fc(&symbols_[symbol_idx][0], &symbols_[symbol_idx][0], &channel_[0], fft_size_);
             }
 
-            message_port_pub(pmt::mp("pdus"), pmt::cons(pmt::make_dict(), pmt::init_c32vector(fft_size_ * 9, &symbols_[0][0])));
+            message_port_pub(pmt::mp("pdus"), pmt::cons(pmt::make_dict(), pmt::init_c32vector(all_data_carriers.size(), all_data_carriers)));
         }
 
         int
