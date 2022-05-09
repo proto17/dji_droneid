@@ -53,6 +53,8 @@ namespace gr {
             static std::vector<uint32_t> get_data_carrier_indices(uint32_t fft_size);
             static std::vector<std::complex<float>> extract_data_carriers(const std::vector<std::complex<float>> & symbol, uint32_t fft_size);
 
+            static std::string bit_vec_to_string(const std::vector<int8_t> & bit_vec);
+
             static void print_bits(const std::vector<int8_t> & bits);
             misc_utils();
 

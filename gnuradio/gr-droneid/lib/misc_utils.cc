@@ -133,7 +133,7 @@ namespace gr {
             if (!handle) {
                 throw std::runtime_error("Failed to open output file");
             }
-            fwrite(elements, sizeof(element_size), element_count, handle);
+            fwrite(elements, element_size, element_count, handle);
             fclose(handle);
         }
 
@@ -149,6 +149,17 @@ namespace gr {
             buff << "\n";
             std::cout << buff.str();
             std::flush(std::cout);
+        }
+
+        std::string misc_utils::bit_vec_to_string(const std::vector<int8_t> &bit_vec) {
+            std::ostringstream buff;
+
+            char lut[2] = {'0', '1'};
+            for (const auto & bit : bit_vec) {
+                buff << lut[bit];
+            }
+
+            return buff.str();
         }
     } /* namespace droneid */
 } /* namespace gr */
