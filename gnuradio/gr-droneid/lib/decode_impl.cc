@@ -96,7 +96,7 @@ namespace gr {
             }
 
             const auto bits = qpsk_to_bits(samples);
-            misc_utils::print_bits(bits);
+//            misc_utils::print_bits(bits);
 
             const auto bytes = decoder_ptr_->decode(bits);
 
