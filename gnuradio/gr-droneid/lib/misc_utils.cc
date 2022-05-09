@@ -22,9 +22,12 @@
 #include "config.h"
 #endif
 
+#include <numeric>
+
 #include <gnuradio/io_signature.h>
 #include <droneid/misc_utils.h>
 #include <gnuradio/fft/fft.h>
+#include <iostream>
 
 namespace gr {
     namespace droneid {
@@ -96,14 +99,57 @@ namespace gr {
         }
 
         void misc_utils::write_samples(const std::string &path, const std::complex<float> * const samples, const uint32_t element_count) {
+            write(path, samples, sizeof(samples[0]), element_count);
+        }
+
+        std::vector<uint32_t> misc_utils::get_data_carrier_indices(const uint32_t fft_size) {
+            std::vector<uint32_t> data_carrier_indices(600, 0);
+
+            auto * ptr = &data_carrier_indices[0];
+            for (uint32_t idx = (fft_size / 2) - 300; idx < (fft_size / 2) + 301; idx++) {
+                if (idx != fft_size / 2) {
+                    *ptr++ = idx;
+                }
+            }
+
+            return data_carrier_indices;
+        }
+
+        std::vector<std::complex<float>> misc_utils::extract_data_carriers(const std::vector<std::complex<float>> & symbol, const uint32_t fft_size) {
+            const auto data_carrier_indices = get_data_carrier_indices(fft_size);
+            std::vector<std::complex<float>> data_carriers(data_carrier_indices.size());
+
+            auto iter = data_carriers.begin();
+            for (const auto & index : data_carrier_indices) {
+                *iter++ = symbol[index];
+            }
+
+            return data_carriers;
+        }
+
+        void
+        misc_utils::write(const std::string &path, const void * const elements, const uint32_t element_size, const uint32_t element_count) {
             FILE * handle = fopen(path.c_str(), "wb");
             if (!handle) {
                 throw std::runtime_error("Failed to open output file");
             }
-            fwrite(samples, sizeof(samples[0]), element_count, handle);
+            fwrite(elements, sizeof(element_size), element_count, handle);
             fclose(handle);
         }
 
+        void misc_utils::write(const std::string &path, const std::vector<uint32_t> &elements) {
+            write(path, &elements[0], sizeof(elements[0]), elements.size());
+        }
+
+        void misc_utils::print_bits(const std::vector<int8_t> & bits) {
+            std::ostringstream buff;
+            for (const auto & bit : bits) {
+                buff << (bit == 0 ? 0 : 1);
+            }
+            buff << "\n";
+            std::cout << buff.str();
+            std::flush(std::cout);
+        }
     } /* namespace droneid */
 } /* namespace gr */
 

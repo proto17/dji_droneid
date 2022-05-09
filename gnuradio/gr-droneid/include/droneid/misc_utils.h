@@ -45,10 +45,15 @@ namespace gr {
             static std::vector<std::complex<float>> create_zc_sequence(double sample_rate, uint32_t root);
             static std::vector<std::complex<float>> conj(const std::vector<std::complex<float>> & input);
 
+            static void write(const std::string & path, const void * element, uint32_t element_size, uint32_t element_count);
+            static void write(const std::string & path, const std::vector<uint32_t> & elements);
             static void write_samples(const std::string &path, const std::complex<float> * samples, uint32_t element_count);
             static void write_samples(const std::string & path, const std::vector<std::complex<float>> & samples);
 
+            static std::vector<uint32_t> get_data_carrier_indices(uint32_t fft_size);
+            static std::vector<std::complex<float>> extract_data_carriers(const std::vector<std::complex<float>> & symbol, uint32_t fft_size);
 
+            static void print_bits(const std::vector<int8_t> & bits);
             misc_utils();
 
             ~misc_utils();
