@@ -25,22 +25,22 @@
 
 #include <droneid/decode.h>
 
-#include "droneid/lte_decode.h"
 
 namespace gr {
     namespace droneid {
 
         class decode_impl : public decode {
         private:
-            std::unique_ptr<lte_decode> decoder_ptr_;
             const std::string input_pdu_port_name_ = "pdus";
             const std::string output_pdu_port_name_ = "pdus";
+
+            const std::string debug_path_;
 
             std::vector<int8_t> qpsk_to_bits(const std::vector<gr_complex> & samples);
             // Nothing to declare in this block.
 
         public:
-            decode_impl();
+            decode_impl(const std::string & debug_path);
 
             ~decode_impl();
 

@@ -45,7 +45,7 @@ namespace gr {
        * class. droneid::decode::make is the public interface for
        * creating new instances.
        */
-      static sptr make();
+      static sptr make(const std::string & debug_path);
     };
 
   } // namespace droneid

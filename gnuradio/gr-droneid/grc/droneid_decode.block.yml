@@ -4,7 +4,7 @@ category: '[droneid]'
 
 templates:
   imports: import droneid
-  make: droneid.decode()
+  make: droneid.decode(${debug_path})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -12,6 +12,9 @@ templates:
 #     * label (label shown in the GUI)
 #     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
 parameters:
+  - id: debug_path
+    label: Debug Path
+    dtype: string
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:
