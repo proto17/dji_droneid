@@ -28,5 +28,6 @@ install(FILES
         ../../lib/utils.h
     demodulation.h
     misc_utils.h
-    lte_decode.h DESTINATION include/droneid
+    lte_decode.h
+    decode.h DESTINATION include/droneid
 )

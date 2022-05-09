@@ -30,6 +30,7 @@ list(APPEND droneid_sources
     demodulation_impl.cc
     misc_utils.cc
     lte_decode.cc
+    decode_impl.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
