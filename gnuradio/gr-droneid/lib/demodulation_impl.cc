@@ -95,7 +95,9 @@ namespace gr {
             fft_shift_->shift(zc_);
             channel_.resize(fft_size_);
 
-            misc_utils::write_samples((path(debug_path_) / "zc").string(), zc_);
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / "zc").string(), zc_);
+            }
         }
 
         /*
@@ -156,7 +158,9 @@ namespace gr {
             /// Channel estimation and equalization
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////
             volk_32fc_x2_divide_32fc(&channel_[0],  &zc_[0], &symbols_[3][0], fft_size_);
-            misc_utils::write_samples((path(debug_path_) / "channel").string(), channel_);
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / "channel").string(), channel_);
+            }
 
             for (uint32_t symbol_idx = 0; symbol_idx < cp_lengths_.size(); symbol_idx++) {
                 for (uint32_t idx = 0; idx < fft_size_; idx++) {
