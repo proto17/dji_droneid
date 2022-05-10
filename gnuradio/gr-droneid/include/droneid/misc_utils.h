@@ -23,6 +23,7 @@
 
 #include <droneid/api.h>
 #include <vector>
+#include <array>
 #include <complex>
 
 namespace gr {
@@ -50,12 +51,35 @@ namespace gr {
             static void write_samples(const std::string &path, const std::complex<float> * samples, uint32_t element_count);
             static void write_samples(const std::string & path, const std::vector<std::complex<float>> & samples);
 
+            static std::vector<std::complex<float>> read_samples(const std::string & file_path, uint32_t offset, uint32_t total_samples);
+
             static std::vector<uint32_t> get_data_carrier_indices(uint32_t fft_size);
             static std::vector<std::complex<float>> extract_data_carriers(const std::vector<std::complex<float>> & symbol, uint32_t fft_size);
 
             static std::string bit_vec_to_string(const std::vector<int8_t> & bit_vec);
 
             static void print_bits(const std::vector<int8_t> & bits);
+
+            static uint32_t find_zc_seq_start_idx(const std::vector<std::complex<float>> & samples, double sample_rate);
+            static double radians_to_hz(double radians, double sample_rate);
+            static double hz_to_radians(double frequency, double sample_rate);
+            static std::vector<uint32_t> get_cyclic_prefix_schedule(double sample_rate);
+
+            static std::vector<std::pair<std::vector<std::complex<float>>, std::vector<std::complex<float>>>>
+                extract_ofdm_symbol_samples(const std::vector<std::complex<float>> & samples, double sample_rate, uint32_t offset);
+
+            static std::vector<std::complex<float>> calculate_channel(const std::vector<std::complex<float>> & symbol, double sample_rate, uint32_t symbol_idx);
+            static std::vector<int8_t> qpsk_to_bits(const std::vector<std::complex<float>> & samples);
+            static std::vector<float> angle(const std::vector<std::complex<float>> & samples) {
+                std::vector<float> angles(samples.size());
+
+                for (uint32_t idx = 0; idx < samples.size(); idx++) {
+                    angles[idx] = std::arg(samples[idx]);
+                }
+
+                return angles;
+            }
+
             misc_utils();
 
             ~misc_utils();

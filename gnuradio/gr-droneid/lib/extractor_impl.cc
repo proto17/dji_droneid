@@ -44,7 +44,7 @@ namespace gr {
                                  gr::io_signature::make2(2, 2, sizeof(gr_complex), sizeof(float)),
                                  gr::io_signature::make(0, 0, 0)), fft_size_(misc_utils::get_fft_size(sample_rate)),
                                  long_cp_len_(misc_utils::get_long_cp_len(sample_rate)), short_cp_len_(misc_utils::get_short_cp_len(sample_rate)),
-                                 extract_samples_count_((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7)){
+                                 extract_samples_count_((fft_size_ * 11) + (long_cp_len_ * 2) + (short_cp_len_ * 7)){
             this->message_port_register_out(pmt::mp("pdus"));
 
             buffer_.resize(extract_samples_count_);

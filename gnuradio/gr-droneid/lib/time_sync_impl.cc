@@ -79,30 +79,17 @@ namespace gr {
         void time_sync_impl::msg_handler(const pmt::pmt_t & pdu) {
             auto meta = pmt::car(pdu);
             auto vec = pmt::cdr(pdu);
-            auto burst_ptr = pmt::c32vector_elements(vec, pdu_element_count_);
+            const auto samples = pmt::c32vector_elements(vec);
             if (! debug_path_.empty()) {
-                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_)).string(), burst_ptr,
-                                          pdu_element_count_);
+                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_)).string(), samples);
             }
 
-            if (buffer_.size() < pdu_element_count_) {
-                buffer_.resize(pdu_element_count_);
-                mags_.resize(pdu_element_count_);
+            if (buffer_.size() < samples.size()) {
+                buffer_.resize(samples.size());
+                mags_.resize(samples.size());
             }
 
-            // Run the correlator ignoring the last `ntaps` elements so as not to walk off the end of the array
-            correlator_ptr_->filterN(&buffer_[0], burst_ptr, pdu_element_count_ - correlator_ptr_->ntaps());
-
-            if (! debug_path_.empty()) {
-                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_)).string(), buffer_);
-            }
-
-            // Find the max correlation peak
-            // TODO: Only search through the area where the ZC is expected to be
-            volk_32fc_magnitude_squared_32f(&mags_[0], &buffer_[0], buffer_.size());
-            uint16_t max_idx;
-            volk_32f_index_max_16u(&max_idx, &mags_[0], mags_.size());
-
+            const auto max_idx = misc_utils::find_zc_seq_start_idx(samples, sample_rate_);
             const uint32_t offset = (fft_size_ * 3) + (short_cp_len_ * 3) + long_cp_len_;
 
             std::cout << "Max: " << max_idx << " offset: " << offset << " - " << (max_idx - offset) << "\n";

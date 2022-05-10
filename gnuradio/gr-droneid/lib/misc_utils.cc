@@ -27,7 +27,10 @@
 #include <gnuradio/io_signature.h>
 #include <droneid/misc_utils.h>
 #include <gnuradio/fft/fft.h>
+#include <gnuradio/fft/fft_shift.h>
 #include <iostream>
+
+#include <volk/volk.h>
 
 namespace gr {
     namespace droneid {
@@ -67,7 +70,7 @@ namespace gr {
             }
 
             // Null out the DC carrier
-            sequence[(fft_size / 2) - 1] = 0;
+            sequence[(fft_size / 2)] = 0;
 
             // Create an FFT object that is configured to run an inverse FFT
             gr::fft::fft_complex ifft(static_cast<int>(fft_size), false, 1);
@@ -161,6 +164,183 @@ namespace gr {
 
             return buff.str();
         }
+
+        uint32_t
+        misc_utils::find_zc_seq_start_idx(const std::vector<std::complex<float>> & samples, const double sample_rate) {
+            const auto fft_size = get_fft_size(sample_rate);
+
+            std::vector<float> scores(samples.size() - fft_size);
+            std::vector<std::complex<float>> window_one(fft_size / 2);
+            std::vector<std::complex<float>> window_two(fft_size / 2);
+
+            auto window_one_iter = samples.begin();
+            auto window_two_iter = samples.begin() + (fft_size / 2);
+
+            std::vector<std::complex<float>> dot_prods(scores.size(), 0);
+
+            for (uint32_t idx = 0; idx < scores.size(); idx++) {
+                std::copy(window_one_iter, window_one_iter + (fft_size / 2), window_one.begin());
+                std::copy(window_two_iter, window_two_iter + (fft_size / 2), window_two.begin());
+
+                window_one_iter++;
+                window_two_iter++;
+
+                std::reverse(window_two.begin(), window_two.end());
+
+                for (int i = 0; i < fft_size / 2; i++) {
+                    dot_prods[idx] += window_one[i] * std::conj(window_two[i]);
+                }
+            }
+
+            volk_32fc_magnitude_squared_32f(&scores[0], &dot_prods[0], dot_prods.size());
+
+            gr::droneid::misc_utils::write_samples("/tmp/dots", dot_prods);
+            gr::droneid::misc_utils::write("/tmp/scores", &scores[0], sizeof(scores[0]), scores.size());
+
+            uint32_t max_idx;
+            volk_32f_index_max_32u(&max_idx, &scores[0], scores.size());
+
+            return max_idx;
+        }
+
+        std::vector<std::complex<float>>
+        misc_utils::read_samples(const std::string &file_path, uint32_t offset, uint32_t total_samples) {
+            const auto element_size = sizeof(std::complex<float>);
+            std::vector<std::complex<float>> samples;
+
+            FILE * file_handle = fopen(file_path.c_str(), "r");
+            if (! file_handle) {
+                throw std::runtime_error("File '" + file_path + "' could not be opened");
+            }
+
+            fseek(file_handle, 0, SEEK_END);
+            const auto available_samples = static_cast<uint32_t>(static_cast<double>(ftell(file_handle)) / element_size);
+            if (available_samples < offset) {
+                throw std::runtime_error("Not enough samples available to be read");
+            }
+
+            uint32_t samples_to_read = std::min(available_samples - offset, total_samples);
+            if (total_samples == 0) {
+                samples_to_read = available_samples - offset;
+            }
+
+            fseek(file_handle, static_cast<int32_t>(offset * element_size), SEEK_SET);
+
+            samples.resize(samples_to_read);
+            fread(&samples[0], element_size, samples_to_read, file_handle);
+            fclose(file_handle);
+
+            return samples;
+        }
+
+        double misc_utils::radians_to_hz(const double radians, const double sample_rate) {
+            return radians * sample_rate / (2 * M_PIf64);
+        }
+
+        double misc_utils::hz_to_radians(const double frequency, const double sample_rate) {
+            return 2 * M_PIf64 * frequency / sample_rate;
+        }
+
+        std::vector<uint32_t> misc_utils::get_cyclic_prefix_schedule(double sample_rate) {
+            const auto long_cp_len = get_long_cp_len(sample_rate);
+            const auto short_cp_len = get_short_cp_len(sample_rate);
+
+            return {
+                long_cp_len,
+                short_cp_len,
+                short_cp_len,
+                short_cp_len,
+                short_cp_len,
+                short_cp_len,
+                short_cp_len,
+                short_cp_len,
+                long_cp_len
+            };
+        }
+
+        std::vector<std::pair<std::vector<std::complex<float>>, std::vector<std::complex<float>>>>
+        misc_utils::extract_ofdm_symbol_samples(const std::vector<std::complex<float>> & samples, double sample_rate, uint32_t offset) {
+            std::vector<std::pair<std::vector<std::complex<float>>, std::vector<std::complex<float>>>> outputs(9);
+            const auto fft_size = get_fft_size(sample_rate);
+            const auto cyclic_prefixes = get_cyclic_prefix_schedule(sample_rate);
+            fft::fft_complex fft_engine(static_cast<int32_t>(fft_size), true);
+            fft::fft_shift<std::complex<float>> fft_shifter(fft_size);
+
+            auto samples_iter = samples.begin() + offset;
+            for (uint32_t idx = 0; idx < outputs.size(); idx++) {
+                samples_iter += cyclic_prefixes[idx];
+                std::vector<std::complex<float>> time_domain(samples_iter, samples_iter + fft_size);
+                std::vector<std::complex<float>> freq_domain(fft_size);
+                std::copy(time_domain.begin(), time_domain.end(), fft_engine.get_inbuf());
+                fft_engine.execute();
+                std::copy(fft_engine.get_outbuf(), fft_engine.get_outbuf() + fft_size, freq_domain.begin());
+                fft_shifter.shift(freq_domain);
+
+                outputs[idx] = std::make_pair(time_domain, freq_domain);
+                samples_iter += fft_size;
+            }
+
+            return outputs;
+        }
+
+        std::vector<std::complex<float>>
+        misc_utils::calculate_channel(const std::vector<std::complex<float>> &symbol, const double sample_rate,
+                                      const uint32_t symbol_idx) {
+            assert(symbol.size() == 600);
+            std::vector<std::complex<float>> channel(symbol.size(), {0, 0});
+            const auto fft_size = get_fft_size(sample_rate);
+            fft::fft_complex fft_engine(static_cast<int32_t>(fft_size), true);
+            fft::fft_shift<std::complex<float>> fft_shifter(fft_size);
+
+            uint32_t root;
+            if (symbol_idx == 4) {
+                root = 600;
+            } else {
+                root = 147;
+            }
+
+            auto zc_gold_seq = create_zc_sequence(sample_rate, root);
+            write_samples("/tmp/zc_time_" + std::to_string(symbol_idx), zc_gold_seq);
+            std::copy(zc_gold_seq.begin(), zc_gold_seq.end(), fft_engine.get_inbuf());
+            fft_engine.execute();
+            std::copy(fft_engine.get_outbuf(), fft_engine.get_outbuf() + fft_size, zc_gold_seq.begin());
+            fft_shifter.shift(zc_gold_seq);
+            write_samples("/tmp/zc_freq_" + std::to_string(symbol_idx), zc_gold_seq);
+
+            const auto zc_data_only = extract_data_carriers(zc_gold_seq, fft_size);
+            write_samples("/tmp/zc_data_" + std::to_string(symbol_idx), zc_data_only);
+
+            for (uint32_t idx = 0; idx < symbol.size(); idx++) {
+                channel[idx] = zc_data_only[idx] / symbol[idx];
+            }
+
+            return channel;
+        }
+
+        std::vector<int8_t> misc_utils::qpsk_to_bits(const std::vector<std::complex<float>> &samples) {
+            std::vector<int8_t> bits(samples.size() * 2);
+
+            auto * bit_vec_ptr = &bits[0];
+
+            std::for_each(samples.begin(), samples.end(), [&bit_vec_ptr](const gr_complex & sample) {
+                if (sample.real() > 0 && sample.imag() > 0) {
+                    *bit_vec_ptr++ = 0;
+                    *bit_vec_ptr++ = 0;
+                } else if (sample.real() > 0 && sample.imag() < 0) {
+                    *bit_vec_ptr++ = 0;
+                    *bit_vec_ptr++ = 1;
+                } else if (sample.real() < 0 && sample.imag() > 0) {
+                    *bit_vec_ptr++ = 1;
+                    *bit_vec_ptr++ = 0;
+                } else {
+                    *bit_vec_ptr++ = 1;
+                    *bit_vec_ptr++ = 1;
+                }
+            });
+
+            return bits;
+        }
+
     } /* namespace droneid */
 } /* namespace gr */
 

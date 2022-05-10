@@ -67,16 +67,10 @@ namespace gr {
 
             int8_t bit_lut[2] = {-63, 63};
             std::vector<int8_t> bits_copy = bits;
-            std::for_each(bits_copy.begin(), bits_copy.end(), [&](int8_t & bit){
-                bit = bit_lut[bit];
-            });
-
-            for (auto & i : bits_copy) {
-                std::cout << (short)i << " ";
+            for (int idx = 0; idx < bits.size(); idx++) {
+                turbo_decoder_input_[idx] = bit_lut[bits[idx]];
             }
-            std::cout << "\n";
 
-            std::copy(bits_copy.begin(), bits_copy.end(), turbo_decoder_input_.begin());
             lte_rate_match_fw(rate_matcher_, &rate_matcher_io_, 0);
             const int decode_status = lte_turbo_decode(turbo_decoder_, EXPECTED_PAYLOAD_BITS, TURBO_ITERATIONS,
                              &decoded_bytes_[0], &d1_[0], &d2_[0], &d3_[0]);
