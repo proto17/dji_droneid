@@ -3,3 +3,5 @@
 **/octave-workspace
 collects/
 **/images/*.png
+gnuradio/gr-droneid/cmake-build-debug
+gnuradio/gr-droneid/build
