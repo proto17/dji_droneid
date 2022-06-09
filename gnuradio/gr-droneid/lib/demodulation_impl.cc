@@ -65,6 +65,7 @@ namespace gr {
             message_port_register_out(pmt::mp("pdus"));
             set_msg_handler(pmt::mp("pdus"), [this](pmt::pmt_t pdu){handle_msg(pdu);});
             cfo_cp_len_ = short_cp_len_;
+            burst_counter_ = 0;
             cfo_buffer_.resize(cfo_cp_len_ * 2);
 //            sample_buffer_.resize((fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7));
 
@@ -146,6 +147,10 @@ namespace gr {
                     zc_seq_full_symbol.begin() + cfo_backoff, zc_seq_full_symbol.begin() + cfo_backoff + cfo_size);
             const std::vector<std::complex<float>> end_of_symbol(
                     zc_seq_full_symbol.end() - cfo_backoff - cfo_size, zc_seq_full_symbol.end() - cfo_backoff);
+
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / ("received_zc_" + std::to_string(burst_counter_++))).string(), zc_);
+            }
 
 //            utils::write_samples("/tmp/window1", cyclic_prefix);
 //            utils::write_samples("/tmp/window2", end_of_symbol);

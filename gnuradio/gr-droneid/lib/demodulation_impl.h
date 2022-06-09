@@ -40,6 +40,7 @@ namespace gr {
 
             std::unique_ptr<gr::fft::fft_complex> fft_;
             std::unique_ptr<gr::fft::fft_shift<std::complex<float>>> fft_shift_;
+            uint32_t burst_counter_;
             size_t sample_count_;
             uint32_t cfo_cp_len_;
             std::vector<uint32_t> cp_lengths_;
