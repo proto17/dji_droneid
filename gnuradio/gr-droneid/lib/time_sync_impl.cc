@@ -81,7 +81,7 @@ namespace gr {
             auto vec = pmt::cdr(pdu);
             const auto samples = pmt::c32vector_elements(vec);
             if (! debug_path_.empty()) {
-                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_)).string(), samples);
+                misc_utils::write_samples((path(debug_path_) / std::to_string(file_counter_++)).string(), samples);
             }
 
             if (buffer_.size() < samples.size()) {
