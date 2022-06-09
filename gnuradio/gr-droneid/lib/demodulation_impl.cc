@@ -157,10 +157,10 @@ namespace gr {
 
             if (! debug_path_.empty()) {
                 misc_utils::write_samples((path(debug_path_) / ("received_zc_" + std::to_string(burst_counter_))).string(), zc_seq_full_symbol);
+                misc_utils::write_samples((path(debug_path_) / ("expected_zc_" + std::to_string(burst_counter_))).string(), zc_);
+                misc_utils::write_samples((path(debug_path_) / ("cfo_estimate_cyclic_prefix_" + std::to_string(burst_counter_))).string(), cyclic_prefix);
+                misc_utils::write_samples((path(debug_path_) / ("cfo_estimate_end_of_symbol_" + std::to_string(burst_counter_))).string(), end_of_symbol);
             }
-
-//            utils::write_samples("/tmp/window1", cyclic_prefix);
-//            utils::write_samples("/tmp/window2", end_of_symbol);
 
             std::complex<float> cfo_dot_prod {0, 0};
             for (uint32_t idx = 0; idx < cyclic_prefix.size(); idx++) {
@@ -174,7 +174,10 @@ namespace gr {
             /////////////////////////////////////////////////////////////////////////////////////
             std::complex<float> starting_cfo_phase {1, 0};
             volk_32fc_s32fc_x2_rotator_32fc(&samples[0], &samples[0], cfo_phase_angle, &starting_cfo_phase, samples.size());
-//            utils::write_samples("/tmp/coarse_correction", samples);
+
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / ("burst_post_coarse_cfo_correction_" + std::to_string(burst_counter_))).string(), samples);
+            }
 
             /////////////////////////////////////////////////////////////////////////////////////
             /// Channel estimation
