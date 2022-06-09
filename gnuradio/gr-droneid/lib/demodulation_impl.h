@@ -36,6 +36,8 @@ namespace gr {
             const uint32_t short_cp_len_;
             const std::string debug_path_;
 
+            const static uint8_t XOR_BIT_VEC [7200];
+
             std::unique_ptr<gr::fft::fft_complex> fft_;
             std::unique_ptr<gr::fft::fft_shift<std::complex<float>>> fft_shift_;
             size_t sample_count_;
