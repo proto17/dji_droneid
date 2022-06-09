@@ -70,7 +70,7 @@ namespace gr {
                 total_samples_read_++;
                 switch (current_state_) {
                     case state_t::WAITING_FOR_THRESHOLD: {
-                        if (correlation_scores[idx] > 0.5) {
+                        if (correlation_scores[idx] > 0.2) {
                             start_sample_index_ = nitems_read(0) + idx;
                             std::cout << "Found burst @ " << total_samples_read_ << " / " << start_sample_index_ << "\n";
                             current_state_ = state_t::COLLECTING_SAMPLES;
