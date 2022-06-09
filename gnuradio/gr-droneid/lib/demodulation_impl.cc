@@ -139,6 +139,7 @@ namespace gr {
 
             const auto total_sample_count = est_start_index + (fft_size_ * 9) + (long_cp_len_ * 2) + (short_cp_len_ * 7);
             if (est_start_index > samples.size() || total_sample_count > samples.size()) {
+                std::cout << "Did not receive enough samples!  Skipping burst\n";
                 return;
             }
 
