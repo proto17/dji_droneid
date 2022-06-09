@@ -120,7 +120,7 @@ namespace gr {
             std::vector<std::complex<float>> samples(pmt::c32vector_elements(vec));
 
             if (! debug_path_.empty()) {
-                misc_utils::write_samples((path(debug_path_) / ("burst_" + std::to_string(burst_counter_))).string(), zc_);
+                misc_utils::write_samples((path(debug_path_) / ("burst_" + std::to_string(burst_counter_))).string(), samples);
             }
 
             if (sample_buffer_.size() < samples.size()) {
