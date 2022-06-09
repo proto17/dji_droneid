@@ -156,7 +156,7 @@ namespace gr {
                     zc_seq_full_symbol.end() - cfo_backoff - cfo_size, zc_seq_full_symbol.end() - cfo_backoff);
 
             if (! debug_path_.empty()) {
-                misc_utils::write_samples((path(debug_path_) / ("received_zc_" + std::to_string(burst_counter_))).string(), zc_);
+                misc_utils::write_samples((path(debug_path_) / ("received_zc_" + std::to_string(burst_counter_))).string(), zc_seq_full_symbol);
             }
 
 //            utils::write_samples("/tmp/window1", cyclic_prefix);
