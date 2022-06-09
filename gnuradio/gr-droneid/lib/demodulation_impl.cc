@@ -111,11 +111,17 @@ namespace gr {
         }
 
         void demodulation_impl::handle_msg(pmt::pmt_t pdu) {
+            burst_counter_++;
+
             const auto meta = pmt::car(pdu);
             const auto vec = pmt::cdr(pdu);
             const std::complex<float> I = {0, 1};
 
             std::vector<std::complex<float>> samples(pmt::c32vector_elements(vec));
+
+            if (! debug_path_.empty()) {
+                misc_utils::write_samples((path(debug_path_) / ("burst_" + std::to_string(burst_counter_))).string(), zc_);
+            }
 
             if (sample_buffer_.size() < samples.size()) {
                 sample_buffer_.resize(samples.size());
@@ -149,7 +155,7 @@ namespace gr {
                     zc_seq_full_symbol.end() - cfo_backoff - cfo_size, zc_seq_full_symbol.end() - cfo_backoff);
 
             if (! debug_path_.empty()) {
-                misc_utils::write_samples((path(debug_path_) / ("received_zc_" + std::to_string(burst_counter_++))).string(), zc_);
+                misc_utils::write_samples((path(debug_path_) / ("received_zc_" + std::to_string(burst_counter_))).string(), zc_);
             }
 
 //            utils::write_samples("/tmp/window1", cyclic_prefix);
