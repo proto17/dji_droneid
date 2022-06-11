@@ -29,5 +29,6 @@ install(FILES
     demodulation.h
     misc_utils.h
     lte_decode.h
-    decode.h DESTINATION include/droneid
+    decode.h
+    normalized_xcorr.h DESTINATION include/droneid
 )

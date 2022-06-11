@@ -15,6 +15,7 @@
 #include "droneid/misc_utils.h"
 #include "droneid/lte_decode.h"
 #include "droneid/decode.h"
+#include "droneid/normalized_xcorr.h"
 //#include "droneid/utils.h"
 %}
 
@@ -35,3 +36,4 @@ GR_SWIG_BLOCK_MAGIC2(droneid, demodulation);
 %include "droneid/lte_decode.h"
 %include "droneid/decode.h"
 GR_SWIG_BLOCK_MAGIC2(droneid, decode);
+%include "droneid/normalized_xcorr.h"

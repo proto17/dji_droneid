@@ -31,6 +31,7 @@ list(APPEND droneid_sources
     misc_utils.cc
     lte_decode.cc
     decode_impl.cc
+    normalized_xcorr.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
@@ -75,6 +76,7 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_droneid_sources
+        qa_normalized_xcorr.cc
 )
 # Anything we need to link to for the unit tests go here
 list(APPEND GR_TEST_TARGET_DEPS gnuradio-droneid)
