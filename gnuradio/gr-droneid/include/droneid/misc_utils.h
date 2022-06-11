@@ -46,6 +46,15 @@ namespace gr {
             static std::vector<std::complex<float>> create_zc_sequence(double sample_rate, uint32_t root);
             static std::vector<std::complex<float>> conj(const std::vector<std::complex<float>> & input);
 
+            static std::complex<float> mean(const std::vector<std::complex<float>> & samples);
+            static float var(const std::vector<std::complex<float>> & samples);
+            static float var_no_mean(const std::vector<std::complex<float>> & samples);
+
+            static std::complex<float> mean(const std::complex<float> * samples, uint32_t sample_count);
+            static float var(const std::complex<float> * samples, uint32_t sample_count);
+
+            static float var_no_mean(const std::complex<float> * samples, uint32_t sample_count);
+
             static void write(const std::string & path, const void * element, uint32_t element_size, uint32_t element_count);
             static void write(const std::string & path, const std::vector<uint32_t> & elements);
             static void write_samples(const std::string &path, const std::complex<float> * samples, uint32_t element_count);

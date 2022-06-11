@@ -341,6 +341,49 @@ namespace gr {
             return bits;
         }
 
+        std::complex<float> misc_utils::mean(const std::vector<std::complex<float>> &samples) {
+            return mean(&samples[0], samples.size());
+        }
+
+        float misc_utils::var(const std::vector<std::complex<float>> &samples) {
+            return var(&samples[0], samples.size());
+        }
+
+        std::complex<float> misc_utils::mean(const std::complex<float> *const samples, const uint32_t sample_count) {
+            auto sum = std::accumulate(samples, samples + sample_count, std::complex<float>{0, 0});
+            return sum / static_cast<float>(sample_count);
+        }
+
+        float misc_utils::var(const std::complex<float> *const samples, uint32_t sample_count) {
+            const auto mean_val = mean(samples, sample_count);
+            const auto recip = 1.0f / static_cast<float>(sample_count - 1);
+            float var_val = 0;
+
+            for (uint32_t idx = 0; idx < sample_count; idx++) {
+                const auto sample = samples[idx] - mean_val;
+                var_val += (static_cast<float>(std::pow(sample.real(), 2) + std::pow(sample.imag(), 2))) * recip;
+            }
+
+            return var_val;
+        }
+
+        float misc_utils::var_no_mean(const std::complex<float> *samples, uint32_t sample_count) {
+            const auto recip = 1.0f / static_cast<float>(sample_count - 1);
+            float var_val = 0;
+
+            for (uint32_t idx = 0; idx < sample_count; idx++) {
+                const auto & sample = samples[idx];
+                var_val += (static_cast<float>(std::pow(sample.real(), 2) + std::pow(sample.imag(), 2))) * recip;
+            }
+
+            return var_val;
+        }
+
+        float misc_utils::var_no_mean(const std::vector<std::complex<float>> &samples) {
+            return var_no_mean(&samples[0], samples.size());
+        }
+
+
     } /* namespace droneid */
 } /* namespace gr */
 
