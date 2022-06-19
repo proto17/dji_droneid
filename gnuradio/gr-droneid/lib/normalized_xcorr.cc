@@ -66,7 +66,7 @@ namespace gr {
                 std::copy(samples + offset, samples + offset + window_size_, temp_.begin());
 
                 running_sum += samples[offset + window_size_ - 1] - last_val;
-                last_val = samples[window_size_ + window_size_ - 1];
+                last_val = samples[offset];
 
                 const auto mean = running_sum / static_cast<sample_t>(window_size_);
 
