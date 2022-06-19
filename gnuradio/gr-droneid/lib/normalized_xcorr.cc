@@ -53,23 +53,29 @@ namespace gr {
             }
 
             const auto max_correlations = sample_count - window_size_;
+            if (scores_.size() < max_correlations) {
+                scores_.resize(max_correlations);
+            }
 
-            complex_t dot_prod;
-            for (uint32_t idx = 0; idx < max_correlations; idx++) {
-                const auto mean = misc_utils::mean(samples + idx, window_size_);
-                for (uint32_t sample_idx = 0; sample_idx < window_size_; sample_idx++) {
-                    temp_[sample_idx] = samples[idx + sample_idx] - mean;
+            for (auto offset = decltype(max_correlations){0}; offset < max_correlations; offset++) {
+                std::copy(samples + offset, samples + offset + window_size_, temp_.begin());
+
+                const auto mean = misc_utils::mean(temp_);
+                std::for_each(temp_.begin(), temp_.end(), [&mean](complex_t & sample){
+                    sample -= mean;
+                });
+
+                complex_t sum = {0, 0};
+                for (auto idx = decltype(window_size_){0}; idx < window_size_; idx++) {
+                    sum += temp_[idx] * taps_[idx];
                 }
 
-                const auto var = misc_utils::var_no_mean(temp_);
+                sum /= static_cast<sample_t>(window_size_);
 
-                volk_32fc_x2_dot_prod_32fc(&dot_prod, &temp_[0], &taps_[0], window_size_);
-                dot_prod /= static_cast<sample_t>(window_size_);
-
-                const auto score = dot_prod / static_cast<sample_t>(std::sqrt(var * taps_var_));
-                output_samples[idx] = static_cast<sample_t>(std::pow(score.real(), 2) + std::pow(score.imag(), 2));
-                //output_samples[idx] = std::pow(std::abs(dot_prod), 1);
+                scores_[offset] = sum / static_cast<sample_t>(std::sqrt(taps_var_ * misc_utils::var_no_mean(temp_)));
             }
+
+            volk_32fc_magnitude_squared_32f(output_samples, &scores_[0], scores_.size());
 
             return max_correlations;
         }

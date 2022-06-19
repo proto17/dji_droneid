@@ -49,6 +49,7 @@ namespace gr {
             uint32_t window_size_;
 
             complex_vec_t temp_;
+            complex_vec_t scores_;
         private:
         };
 
