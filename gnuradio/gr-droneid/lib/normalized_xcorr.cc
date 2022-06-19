@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <numeric>
+
 #include <gnuradio/io_signature.h>
 #include <droneid/normalized_xcorr.h>
 #include <droneid/misc_utils.h>
@@ -52,6 +54,9 @@ namespace gr {
                 return 0;
             }
 
+            auto running_sum = std::accumulate(samples, samples + window_size_ - 1, complex_t{0, 0});
+            complex_t last_val = {0, 0};
+
             const auto max_correlations = sample_count - window_size_;
             if (scores_.size() < max_correlations) {
                 scores_.resize(max_correlations);
@@ -60,15 +65,17 @@ namespace gr {
             for (auto offset = decltype(max_correlations){0}; offset < max_correlations; offset++) {
                 std::copy(samples + offset, samples + offset + window_size_, temp_.begin());
 
-                const auto mean = misc_utils::mean(temp_);
+                running_sum += samples[offset + window_size_ - 1] - last_val;
+                last_val = samples[window_size_ + window_size_ - 1];
+
+                const auto mean = running_sum / static_cast<sample_t>(window_size_);
+
                 std::for_each(temp_.begin(), temp_.end(), [&mean](complex_t & sample){
                     sample -= mean;
                 });
 
-                complex_t sum = {0, 0};
-                for (auto idx = decltype(window_size_){0}; idx < window_size_; idx++) {
-                    sum += temp_[idx] * taps_[idx];
-                }
+                complex_t sum;
+                volk_32fc_x2_dot_prod_32fc(&sum, &temp_[0], &taps_[0], window_size_);
 
                 sum /= static_cast<sample_t>(window_size_);
 
