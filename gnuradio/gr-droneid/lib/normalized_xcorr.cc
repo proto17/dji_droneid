@@ -54,35 +54,18 @@ namespace gr {
                 return 0;
             }
 
-            auto running_sum = std::accumulate(samples, samples + window_size_ - 1, complex_t{0, 0});
-            complex_t last_val = {0, 0};
-
             const auto max_correlations = sample_count - window_size_;
             if (scores_.size() < max_correlations) {
                 scores_.resize(max_correlations);
             }
 
             for (auto offset = decltype(max_correlations){0}; offset < max_correlations; offset++) {
-                std::copy(samples + offset, samples + offset + window_size_, temp_.begin());
-
-                running_sum += samples[offset + window_size_ - 1] - last_val;
-                last_val = samples[offset];
-
-                const auto mean = running_sum / static_cast<sample_t>(window_size_);
-
-                std::for_each(temp_.begin(), temp_.end(), [&mean](complex_t & sample){
-                    sample -= mean;
-                });
-
-                complex_t sum;
-                volk_32fc_x2_dot_prod_32fc(&sum, &temp_[0], &taps_[0], window_size_);
-
-                sum /= static_cast<sample_t>(window_size_);
-
-                scores_[offset] = sum / static_cast<sample_t>(std::sqrt(taps_var_ * misc_utils::var_no_mean(temp_)));
+                volk_32fc_x2_dot_prod_32fc(&scores_[offset], samples + offset, &taps_[0], window_size_);
             }
 
-            volk_32fc_magnitude_squared_32f(output_samples, &scores_[0], scores_.size());
+            const complex_t scalar = {1 / static_cast<sample_t>(sqrt(taps_var_) * window_size_), 0};
+            volk_32fc_s32fc_multiply_32fc(&scores_[0], &scores_[0], scalar, max_correlations);
+            volk_32fc_magnitude_squared_32f(output_samples, &scores_[0], max_correlations);
 
             return max_correlations;
         }
