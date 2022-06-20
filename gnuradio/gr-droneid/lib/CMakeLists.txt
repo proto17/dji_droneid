@@ -41,6 +41,9 @@ if(NOT droneid_sources)
 endif(NOT droneid_sources)
 
 add_library(gnuradio-droneid SHARED ${droneid_sources})
+# Compile with all optimizations on
+target_compile_options(gnuradio-droneid PRIVATE -Ofast -march=native)
+
 target_link_libraries(gnuradio-droneid gnuradio::gnuradio-runtime gnuradio::gnuradio-fft gnuradio::gnuradio-filter)
 target_link_libraries(gnuradio-droneid turbofec)
 target_include_directories(gnuradio-droneid
