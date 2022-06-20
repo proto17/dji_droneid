@@ -89,6 +89,9 @@ namespace gr {
                 return angles;
             }
 
+            static std::vector<float> abs_squared(const std::vector<std::complex<float>> & samples);
+            static std::vector<float> abs_squared(const std::vector<std::complex<float>> && samples);
+
             misc_utils();
 
             ~misc_utils();

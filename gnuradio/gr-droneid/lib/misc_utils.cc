@@ -383,6 +383,21 @@ namespace gr {
             return var_no_mean(&samples[0], samples.size());
         }
 
+        std::vector<float> misc_utils::abs_squared(const std::vector<std::complex<float>> &samples) {
+            std::vector<float> ret(samples.size());
+
+            for (auto idx = decltype(samples.size()){0}; idx < samples.size(); idx++) {
+                const auto & sample = samples[idx];
+                ret[idx] = (sample.real() * sample.real()) + (sample.imag() * sample.imag());
+            }
+
+            return ret;
+        }
+
+        std::vector<float> misc_utils::abs_squared(const std::vector<std::complex<float>> && samples) {
+            return abs_squared(samples);
+        }
+
 
     } /* namespace droneid */
 } /* namespace gr */
