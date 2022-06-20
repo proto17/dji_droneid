@@ -30,5 +30,6 @@ install(FILES
     misc_utils.h
     lte_decode.h
     decode.h
-    normalized_xcorr.h DESTINATION include/droneid
+    normalized_xcorr.h
+    normalized_xcorr_estimate.h DESTINATION include/droneid
 )
