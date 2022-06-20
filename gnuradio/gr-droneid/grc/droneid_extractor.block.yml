@@ -4,8 +4,9 @@ category: '[droneid]'
 
 templates:
   imports: import droneid
-  make: droneid.extractor(${sample_rate})
-
+  make: droneid.extractor(${sample_rate}, ${threshold})
+  callbacks:
+    - set_threshold(${threshold})
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
 #     * id (makes the value accessible as \$keyname, e.g. in the make entry)
@@ -14,6 +15,9 @@ templates:
 parameters:
 - id: sample_rate
   label: Sample Rate
+  dtype: float
+- id: threshold
+  label: Correlator threshold
   dtype: float
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.

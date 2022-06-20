@@ -45,7 +45,9 @@ namespace gr {
        * class. droneid::extractor::make is the public interface for
        * creating new instances.
        */
-      static sptr make(double sample_rate);
+      static sptr make(double /*sample_rate*/, float /*threshold*/);
+
+      virtual void set_threshold(float /*threshold*/) = 0;
     };
 
   } // namespace droneid

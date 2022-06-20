@@ -30,16 +30,16 @@ namespace gr {
     namespace droneid {
 
         extractor::sptr
-        extractor::make(double sample_rate) {
+        extractor::make(const double sample_rate, const float threshold) {
             return gnuradio::get_initial_sptr
-                    (new extractor_impl(sample_rate));
+                    (new extractor_impl(sample_rate, threshold));
         }
 
 
         /*
          * The private constructor
          */
-        extractor_impl::extractor_impl(double sample_rate)
+        extractor_impl::extractor_impl(double sample_rate, const float threshold)
                 : gr::sync_block("extractor",
                                  gr::io_signature::make2(2, 2, sizeof(gr_complex), sizeof(float)),
                                  gr::io_signature::make(0, 0, 0)), fft_size_(misc_utils::get_fft_size(sample_rate)),
@@ -51,12 +51,18 @@ namespace gr {
             current_state_ = state_t::WAITING_FOR_THRESHOLD;
             collected_samples_ = 0;
             total_samples_read_ = 0;
+            threshold_ = threshold;
         }
 
         /*
          * Our virtual destructor.
          */
         extractor_impl::~extractor_impl() {
+        }
+
+        void extractor_impl::set_threshold(const float threshold) {
+            std::lock_guard<decltype(parameter_lock_)> l(parameter_lock_);
+            threshold_ = threshold;
         }
 
         int
@@ -66,11 +72,17 @@ namespace gr {
             const gr_complex *samples = (const gr_complex *) input_items[0];
             const float *correlation_scores = (const float *) input_items[1];
 
+            float threshold;
+            {
+                std::lock_guard<decltype(parameter_lock_)> lock(parameter_lock_);
+                threshold = threshold_;
+            }
+
             for (int idx = 0; idx < noutput_items; idx++) {
                 total_samples_read_++;
                 switch (current_state_) {
                     case state_t::WAITING_FOR_THRESHOLD: {
-                        if (correlation_scores[idx] > 0.2) {
+                        if (correlation_scores[idx] > threshold) {
                             start_sample_index_ = nitems_read(0) + idx;
                             std::cout << "Found burst @ " << total_samples_read_ << " / " << start_sample_index_ << "\n";
                             current_state_ = state_t::COLLECTING_SAMPLES;

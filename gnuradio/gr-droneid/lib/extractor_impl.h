@@ -45,10 +45,15 @@ namespace gr {
             const uint32_t extract_samples_count_;
             std::vector<gr_complex> buffer_;
 
+            float threshold_;
+            std::mutex parameter_lock_;
+
         public:
-            extractor_impl(double sample_rate);
+            extractor_impl(double sample_rate, float threshold);
 
             ~extractor_impl();
+
+            void set_threshold(float threshold) override;
 
             // Where all the action really happens
             int work(
