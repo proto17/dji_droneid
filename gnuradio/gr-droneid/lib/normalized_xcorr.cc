@@ -34,19 +34,35 @@ namespace gr {
     namespace droneid {
 
         normalized_xcorr::normalized_xcorr(const complex_vec_t & filter_taps) {
-            taps_ = misc_utils::conj(filter_taps);
-            const auto mean = misc_utils::mean(taps_);
-            std::for_each(taps_.begin(), taps_.end(), [&mean](complex_t & sample){
+            window_size_ = filter_taps.size();
+            taps_ = (complex_t *)volk_malloc(sizeof(complex_t) * window_size_, volk_get_alignment());
+            temp_ = (decltype(temp_))volk_malloc(sizeof(temp_[0]) * window_size_, volk_get_alignment());
+            std::copy(filter_taps.begin(), filter_taps.end(), taps_);
+
+            const auto mean = misc_utils::mean(taps_, window_size_);
+            std::for_each(taps_, taps_ + window_size_, [&mean](complex_t & sample){
                 sample -= mean;
             });
 
-            taps_var_ = misc_utils::var(taps_);
-            window_size_ = filter_taps.size();
+            taps_var_ = misc_utils::var(taps_, window_size_);
 
-            temp_.resize(window_size_);
+            scalar_ = {1 / static_cast<sample_t>(sqrt(taps_var_) * window_size_), 0};
+            scores_size_ = 0;
         }
 
-        normalized_xcorr::~normalized_xcorr() = default;
+        normalized_xcorr::~normalized_xcorr() {
+            if (taps_ != nullptr) {
+                volk_free(taps_);
+            }
+
+            if (temp_ != nullptr) {
+                volk_free(temp_);
+            }
+
+            if (scores_ != nullptr) {
+                volk_free(scores_);
+            }
+        };
 
         uint32_t normalized_xcorr::run(const normalized_xcorr::complex_t * const samples, const uint32_t sample_count,
                                        normalized_xcorr::sample_t * const output_samples) {
@@ -55,17 +71,20 @@ namespace gr {
             }
 
             const auto max_correlations = sample_count - window_size_;
-            if (scores_.size() < max_correlations) {
-                scores_.resize(max_correlations);
+            if (scores_size_ < max_correlations) {
+                if (scores_ != nullptr) {
+                    volk_free(scores_);
+                }
+                scores_ = (decltype(scores_))volk_malloc(sizeof(scores_[0]) * max_correlations, volk_get_alignment());
+                scores_size_ = max_correlations;
             }
 
             for (auto offset = decltype(max_correlations){0}; offset < max_correlations; offset++) {
                 volk_32fc_x2_dot_prod_32fc(&scores_[offset], samples + offset, &taps_[0], window_size_);
             }
 
-            const complex_t scalar = {1 / static_cast<sample_t>(sqrt(taps_var_) * window_size_), 0};
-            volk_32fc_s32fc_multiply_32fc(&scores_[0], &scores_[0], scalar, max_correlations);
-            volk_32fc_magnitude_squared_32f(output_samples, &scores_[0], max_correlations);
+            volk_32fc_s32fc_multiply_32fc_a(&scores_[0], &scores_[0], scalar_, max_correlations);
+            volk_32fc_magnitude_squared_32f_a(output_samples, &scores_[0], max_correlations);
 
             return max_correlations;
         }

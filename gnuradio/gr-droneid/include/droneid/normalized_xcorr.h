@@ -44,12 +44,15 @@ namespace gr {
 
             ~normalized_xcorr();
         protected:
-            complex_vec_t taps_;
+            complex_t * taps_;
+            complex_t * scores_;
+            uint32_t scores_size_;
             double taps_var_;
             uint32_t window_size_;
 
-            complex_vec_t temp_;
-            complex_vec_t scores_;
+            complex_t * temp_;
+//            complex_vec_t scores_;
+            complex_t scalar_;
         private:
         };
 
