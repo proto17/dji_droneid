@@ -33,7 +33,6 @@ namespace gr {
             float taps_var_;
             float window_size_recip_;
             gr_complex window_size_recip_complex_;
-            std::vector<gr_complex> temp_;
             std::vector<gr_complex> taps_;
             std::vector<gr_complex> sums_;
             std::vector<float> vars_;
