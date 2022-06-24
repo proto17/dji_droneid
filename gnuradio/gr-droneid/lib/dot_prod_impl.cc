@@ -157,10 +157,6 @@ namespace gr {
             // Take the square root of the product of the two variances
             volk_32f_sqrt_32f(&vars_[0], &vars_[0], num_steps);
 
-            for (auto & var : vars_) {
-                var += std::numeric_limits<float>::epsilon() * 10;
-            }
-
             // There's no VOLK function for the reciprocal operation.  This is being done so that a multiply can be
             // used next to divide the dot product results by the sqrt calculated above
             for (auto & var : vars_) {
