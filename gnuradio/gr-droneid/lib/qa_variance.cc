@@ -78,50 +78,8 @@ namespace gr {
             return output;
         }
 
-        BOOST_AUTO_TEST_CASE(foo2) {
-            auto tb = gr::make_top_block("top");
-
-            const auto sample_count = 12000;
-            const auto window_size = 1024;
-
-            const auto noise = create_noise(sample_count);
-
-//            std::vector<gr_complex> kk(sample_count);
-//            for (uint32_t idx = 0; idx < sample_count; idx++) {
-//                kk[idx] = {(float)idx, (float)idx};
-//            }
-
-            auto source = gr::blocks::vector_source<gr_complex>::make(noise);
-            auto sink = gr::blocks::vector_sink<float>::make();
-
-            auto uut = gr::droneid::variance::make(window_size);
-
-            tb->connect(source, 0, uut, 0);
-            tb->connect(uut, 0, sink, 0);
-
-            tb->run();
-
-//            tb->start();
-//
-//            uint32_t last_sample_count = 0;
-//            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//            while(true) {
-//                if (last_sample_count != sink->data().size()) {
-//                    last_sample_count = sink->data().size();
-//                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//                } else {
-//                    break;
-//                }
-//            }
-//
-//            tb->stop();
-
-            const auto expected_values = calculate_true_variance(noise, window_size);
-            const auto & uut_output = sink->data();
-
-            std::cout << "Got " << expected_values.size() << " elements from MATLAB and ";
-            std::cout << uut_output.size() << " elements from GNU Radio\n";
-
+        void plot_results(const std::vector<float> & expected_values, const std::vector<float> & uut_output,
+                          const uint32_t window_size) {
             auto matlab = matlab::engine::startMATLAB();
             matlab::data::ArrayFactory factory;
 
@@ -143,6 +101,39 @@ namespace gr {
                     u"subplot(3, 1, 2); plot(uut); title('UUT');"
                     u"subplot(3, 1, 3); plot(uut - matlab); title('Delta');"
                     u"pause");
+        }
+
+        BOOST_AUTO_TEST_CASE(test_variance) {
+            const float max_delta = 60e-3;
+            auto tb = gr::make_top_block("top");
+
+            const auto sample_count = 12000;
+            const auto window_size = 1024;
+
+            const auto noise = create_noise(sample_count);
+
+            auto source = gr::blocks::vector_source<gr_complex>::make(noise);
+            auto sink = gr::blocks::vector_sink<float>::make();
+
+            auto uut = gr::droneid::variance::make(window_size);
+
+            tb->connect(source, 0, uut, 0);
+            tb->connect(uut, 0, sink, 0);
+
+            tb->run();
+
+            const auto expected_values = calculate_true_variance(noise, window_size);
+            const auto & uut_output = sink->data();
+
+            for (uint32_t idx = 0; idx < expected_values.size(); idx++) {
+                const auto delta = abs(expected_values[idx] - uut_output[idx]);
+                BOOST_ASSERT(delta < max_delta);
+            }
+
+            BOOST_ASSERT_MSG(expected_values.size() == uut_output.size(),
+                             "Did not get expected number of samples back");
+
+            plot_results(expected_values, uut_output, window_size);
 
         }
 
