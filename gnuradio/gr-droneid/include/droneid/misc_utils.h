@@ -43,6 +43,8 @@ namespace gr {
             static uint32_t get_short_cp_len(double sample_rate);
             static uint32_t get_fft_size(double sample_rate);
 
+            static std::vector<std::complex<float>> create_gaussian_noise(uint32_t sample_count);
+
             static std::vector<std::complex<float>> create_zc_sequence(double sample_rate, uint32_t root);
             static std::vector<std::complex<float>> conj(const std::vector<std::complex<float>> & input);
 

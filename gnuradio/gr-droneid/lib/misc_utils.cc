@@ -28,6 +28,7 @@
 #include <droneid/misc_utils.h>
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft_shift.h>
+#include <gnuradio/random.h>
 #include <iostream>
 
 #include <volk/volk.h>
@@ -396,6 +397,16 @@ namespace gr {
 
         std::vector<float> misc_utils::abs_squared(const std::vector<std::complex<float>> && samples) {
             return abs_squared(samples);
+        }
+
+        std::vector<std::complex<float>> misc_utils::create_gaussian_noise(const uint32_t sample_count) {
+            std::vector<std::complex<float>> output(sample_count);
+            gr::random rand;
+            for (auto & sample : output) {
+                sample = rand.rayleigh_complex();
+            }
+
+            return output;
         }
 
 
