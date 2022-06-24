@@ -34,6 +34,7 @@ list(APPEND droneid_sources
     normalized_xcorr.cc
     normalized_xcorr_estimate_impl.cc
     variance_impl.cc
+    dot_prod_impl.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
@@ -101,6 +102,7 @@ if (MATLAB_PATH)
     list(APPEND test_droneid_sources
         qa_variance.cc
         qa_normalized_xcorr.cc
+        qa_dot_prod.cc
     )
 else()
     message(WARNING "No MATLAB path specified, so some tests will be skipped")

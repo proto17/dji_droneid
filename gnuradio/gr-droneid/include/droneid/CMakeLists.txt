@@ -32,5 +32,6 @@ install(FILES
     decode.h
     normalized_xcorr.h
     normalized_xcorr_estimate.h
-    variance.h DESTINATION include/droneid
+    variance.h
+    dot_prod.h DESTINATION include/droneid
 )

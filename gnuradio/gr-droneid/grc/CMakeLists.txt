@@ -26,5 +26,6 @@ install(FILES
     droneid_lte_decode.block.yml
     droneid_decode.block.yml
     droneid_normalized_xcorr_estimate.block.yml
-    droneid_variance.block.yml DESTINATION share/gnuradio/grc/blocks
+    droneid_variance.block.yml
+    droneid_dot_prod.block.yml DESTINATION share/gnuradio/grc/blocks
 )
