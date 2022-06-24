@@ -25,6 +25,8 @@ cmake_minimum_required(VERSION 3.8)
 project(gr-droneid CXX C)
 enable_testing()
 
+set(MATLAB_PATH "" CACHE STRING "Path to MATLAB installation")
+
 # Install to PyBOMBS target prefix if defined
 if(DEFINED ENV{PYBOMBS_PREFIX})
     set(CMAKE_INSTALL_PREFIX $ENV{PYBOMBS_PREFIX})

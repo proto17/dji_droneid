@@ -81,10 +81,31 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_droneid_sources
-        qa_normalized_xcorr.cc
-        qa_normalized_xcorr_estimate.cc
-        qa_variance.cc
+    qa_normalized_xcorr_estimate.cc
 )
+
+if (MATLAB_PATH)
+    message(STATUS "Using MATLAB path '${MATLAB_PATH}'")
+
+    if (NOT IS_DIRECTORY ${MATLAB_PATH})
+        message(FATAL_ERROR "MATLAB path '${MATLAB_PATH}' does not exist or is not a directory.  Please fix or remove")
+    endif()
+
+    # Add paths to MATLAB libraries and headers
+    target_link_directories(gnuradio-droneid PUBLIC ${MATLAB_PATH}/extern/bin/glnxa64)
+    target_include_directories(gnuradio-droneid PUBLIC PUBLIC ${MATLAB_PATH}/extern/include)
+
+    # Add MATLAB library dependencies
+    target_link_libraries(gnuradio-droneid MatlabEngine MatlabDataArray)
+
+    list(APPEND test_droneid_sources
+        qa_variance.cc
+        qa_normalized_xcorr.cc
+    )
+else()
+    message(WARNING "No MATLAB path specified, so some tests will be skipped")
+endif()
+
 # Anything we need to link to for the unit tests go here
 list(APPEND GR_TEST_TARGET_DEPS gnuradio-droneid)
 
