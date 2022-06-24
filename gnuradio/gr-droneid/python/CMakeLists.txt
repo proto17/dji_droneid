@@ -46,3 +46,4 @@ GR_ADD_TEST(qa_extractor ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ext
 GR_ADD_TEST(qa_time_sync ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_time_sync.py)
 GR_ADD_TEST(qa_demodulation ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_demodulation.py)
 GR_ADD_TEST(qa_normalized_xcorr_estimate ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_normalized_xcorr_estimate.py)
+GR_ADD_TEST(qa_variance ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_variance.py)
