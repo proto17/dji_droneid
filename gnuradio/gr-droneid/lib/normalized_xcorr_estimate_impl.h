@@ -37,6 +37,7 @@ namespace gr {
             std::vector<float> vars_;
             std::vector<float> abs_squared_;
             std::vector<gr_complex> buffer_;
+            const gr_complex zero_complex_ = gr_complex{0, 0};
             // Nothing to declare in this block.
 
         public:

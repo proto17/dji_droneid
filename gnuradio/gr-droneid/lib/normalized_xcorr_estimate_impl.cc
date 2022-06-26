@@ -160,6 +160,13 @@ namespace gr {
             // Divide by the square root above
             volk_32fc_32f_multiply_32fc(&out[0], &out[0], &vars_[0], num_steps);
 
+            // Go through all outputs and replace NaN's with zeros.  This isn't strictly required, but nice to have
+            for (uint32_t idx = 0; idx < num_steps; idx++) {
+                if (out[idx].real() == FP_NAN || out[idx].imag() == FP_NAN) {
+                    out[idx] = zero_complex_;
+                }
+            }
+
             // Remove all the samples that have been processed from the buffer.  Leaving just the last <window_size_-1>
             // samples for the next call
             buffer_.erase(buffer_.begin(), buffer_.begin() + num_steps);
