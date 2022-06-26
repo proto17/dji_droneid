@@ -18,20 +18,43 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#include <iostream>
+
 #include <gnuradio/attributes.h>
-#include <cppunit/TestAssert.h>
 #include "qa_normalized_xcorr_estimate.h"
+
 #include <droneid/normalized_xcorr_estimate.h>
+#include <droneid/misc_utils.h>
+
 #include <boost/test/unit_test.hpp>
 
+#include <gnuradio/blocks/vector_source.h>
+#include <gnuradio/blocks/vector_sink.h>
+#include <gnuradio/blocks/file_source.h>
+#include <gnuradio/top_block.h>
 
 namespace gr {
-  namespace droneid {
+    namespace droneid {
+        BOOST_AUTO_TEST_CASE(normalized_xcorr_estimate_test) {
+            auto tb = gr::make_top_block("top");
 
-      BOOST_AUTO_TEST_CASE(foo) {
+            const auto noise = misc_utils::create_gaussian_noise(12000);
+            const auto taps_offset = 4562;
+            const auto taps_size = 1024;
+            const auto taps = std::vector<gr_complex>(noise.begin() + taps_offset, noise.begin() + taps_offset + taps_size);
 
-      }
+            auto source = gr::blocks::vector_source<gr_complex>::make(noise);
+            auto sink = gr::blocks::vector_sink<gr_complex>::make();
 
-  } /* namespace droneid */
+            auto uut = droneid::normalized_xcorr_estimate::make(taps);
+
+            tb->connect(source, 0, uut, 0);
+            tb->connect(uut, 0, sink, 0);
+
+            tb->run();
+
+            std::cout << "Sent in " << noise.size() << " samples, got back " << sink->data().size() << " samples\n";
+        }
+    } /* namespace droneid */
 } /* namespace gr */
 

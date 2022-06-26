@@ -4,7 +4,7 @@ category: '[droneid]'
 
 templates:
   imports: import droneid
-  make: droneid.normalized_xcorr_estimate(${filter_taps})
+  make: droneid.normalized_xcorr_estimate(${taps})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
@@ -12,7 +12,7 @@ templates:
 #     * label (label shown in the GUI)
 #     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
 parameters:
-- id: filter_taps
+- id: taps
   label: Filter Taps
   dtype: complex_vector
 
@@ -33,7 +33,7 @@ inputs:
 outputs:
 - label: out
   domain: stream
-  dtype: float
+  dtype: complex
   vlen: 1
   optional: 0
 

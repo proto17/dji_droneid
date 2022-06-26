@@ -18,7 +18,6 @@
 #include "droneid/normalized_xcorr.h"
 #include "droneid/normalized_xcorr_estimate.h"
 #include "droneid/variance.h"
-#include "droneid/dot_prod.h"
 //#include "droneid/utils.h"
 %}
 
@@ -44,5 +43,3 @@ GR_SWIG_BLOCK_MAGIC2(droneid, decode);
 GR_SWIG_BLOCK_MAGIC2(droneid, normalized_xcorr_estimate);
 %include "droneid/variance.h"
 GR_SWIG_BLOCK_MAGIC2(droneid, variance);
-%include "droneid/dot_prod.h"
-GR_SWIG_BLOCK_MAGIC2(droneid, dot_prod);

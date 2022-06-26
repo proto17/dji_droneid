@@ -21,7 +21,7 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-import droneid_swig as droneid
+import normalized_xcorr_estimate_swig as droneid
 
 class qa_normalized_xcorr_estimate(gr_unittest.TestCase):
 

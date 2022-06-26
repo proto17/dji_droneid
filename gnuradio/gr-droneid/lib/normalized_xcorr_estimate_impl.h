@@ -22,26 +22,33 @@
 #define INCLUDED_DRONEID_NORMALIZED_XCORR_ESTIMATE_IMPL_H
 
 #include <droneid/normalized_xcorr_estimate.h>
-#include <droneid/normalized_xcorr.h>
 
 namespace gr {
     namespace droneid {
 
         class normalized_xcorr_estimate_impl : public normalized_xcorr_estimate {
         private:
-            std::unique_ptr<gr::droneid::normalized_xcorr> xcorr_;
+            const uint32_t window_size_;
+            float taps_var_;
+            float window_size_recip_;
+            gr_complex window_size_recip_complex_;
+            std::vector<gr_complex> taps_;
+            std::vector<gr_complex> sums_;
+            std::vector<float> vars_;
+            std::vector<float> abs_squared_;
+            std::vector<gr_complex> buffer_;
+            // Nothing to declare in this block.
 
         public:
-            normalized_xcorr_estimate_impl(std::vector<std::complex<float>> filter_taps);
+            normalized_xcorr_estimate_impl(const std::vector<gr_complex> & taps);
 
             ~normalized_xcorr_estimate_impl();
 
-            // Where all the action really happens
-            int work(
-                    int noutput_items,
-                    gr_vector_const_void_star &input_items,
-                    gr_vector_void_star &output_items
-            );
+            int general_work(int noutput_items,
+                             gr_vector_int &ninput_items,
+                             gr_vector_const_void_star &input_items,
+                             gr_vector_void_star &output_items);
+
         };
 
     } // namespace droneid
