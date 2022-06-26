@@ -73,9 +73,11 @@ namespace gr {
                                                 gr_vector_int &ninput_items,
                                                 gr_vector_const_void_star &input_items,
                                                 gr_vector_void_star &output_items) {
+            // Get handles to the input and output arrays
             const auto *in = (const gr_complex *) input_items[0];
             auto *out = (gr_complex *) output_items[0];
 
+            // Always tell GNU Radio that all samples were accepted even if not this many samples were written out
             consume_each(noutput_items);
 
             // This is how the remaining samples are buffered between calls.  It's important to realize that this algo
