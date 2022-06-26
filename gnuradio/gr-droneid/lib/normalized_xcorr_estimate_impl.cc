@@ -154,14 +154,8 @@ namespace gr {
             // Multiply each variance by the tap variances then take the reciprocal
             volk_32f_s32f_multiply_32f(&vars_[0], &vars_[0], taps_var_, num_steps);
 
-            // Take the square root of the product of the two variances
-            volk_32f_sqrt_32f(&vars_[0], &vars_[0], num_steps);
-
-            // There's no VOLK function for the reciprocal operation.  This is being done so that a multiply can be
-            // used next to divide the dot product results by the sqrt calculated above
-            for (auto & var : vars_) {
-                var = 1.0f / var;
-            }
+            // Calculate the inverse square root (1/sqrt(vars_[x]))
+            volk_32f_invsqrt_32f(&vars_[0], &vars_[0], num_steps);
 
             // Divide by the square root above
             volk_32fc_32f_multiply_32fc(&out[0], &out[0], &vars_[0], num_steps);
