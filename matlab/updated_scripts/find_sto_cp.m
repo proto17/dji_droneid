@@ -46,7 +46,7 @@ function [start_offset] = find_sto_cp(samples, sample_rate)
             right = window(end - cp_len + 1:end);
     
             % Correlate the two windows
-            scores(cp_idx) = abs(xcorr(left, right, 0, 'normalized'));
+            scores(cp_idx) = abs(xcorr(left, right, 0));
     
             % Move the sample pointer forward by the full symbol size
             offset = offset + cp_len + fft_size;
