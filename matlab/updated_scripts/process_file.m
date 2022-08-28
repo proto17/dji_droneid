@@ -83,6 +83,20 @@ for burst_idx=1:size(bursts, 1)
     if (enable_plots)
         figure(43);
         plot(10 * log10(abs(burst).^2));
+        
+        % Plot the FFT, but average it with a single pole IIR filter to make it smoother
+        figure(1000);
+        fft_bins = 10 * log10(abs(fftshift(fft(burst))).^2);
+        running = fft_bins(1);
+        beta = 0.06;
+        for idx = 2:length(fft_bins)
+            running = (running * (1 - beta)) + (fft_bins(idx) * beta);
+            fft_bins(idx) = running;
+        end
+        x_axis = file_sample_rate / 2 * linspace(-1, 1, length(burst));
+        plot(x_axis, fft_bins);
+        title('Frequency Spectrum (averaged)');
+        grid on;
     end
 
     %% Apply low pass filter
