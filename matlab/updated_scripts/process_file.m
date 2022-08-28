@@ -100,6 +100,54 @@ for burst_idx=1:size(bursts, 1)
         grid on;
     end
 
+    %% Find Integer Frequency Offset
+
+    % Exploiting the fact that during the first ZC sequence the DC carrier will be much lower in amplitude than the 
+    % surrounding samples.  Steps:
+    %   1. Extract just the time domain samples used in the first ZC sequence
+    %   2. Interpolate those time domain samples to increase the frequency resolution of the measurement
+    %   3. Get the power spectrum (abs squared of the FFT)
+    %   4. Look N elements around the center of the FFT for the lowest point (this is the center of the signal)
+    %   5. Calculate how far off from 0 Hz the lowest bin was, and frequency shift the upsampled signal by that value
+    %   6. Decimate the samples back to the original sample rate for further processing
+
+    % Calculate the first sample index for the first ZC sequence (skipping the cyclic prefix)
+    offset = sum(cyclic_prefix_schedule(1:4)) + (fft_size * 3) + filter_tap_count;
+    
+    % Upsample (interpolate and filter) the ZC sequence samples
+    interp_rate = 10;
+    burst = resample(burst, interp_rate, 1);
+    
+    % Extract out just the samples for the first ZC sequence
+    zc_samples = burst((offset * interp_rate):(offset * interp_rate) + (fft_size * interp_rate) - 1);
+
+    % Convert the time domain ZC sequence samples to the frequency domain
+    fft_bins = 10 * log10(abs(fftshift(fft(zc_samples))).^2);
+    
+    % Loop for the lowest bin in the middle of the frequency domain spectrum
+    bin_count = 15; % How far left and right to look for the lowest carrier
+
+    % Set all of the FFT bins on the outside to infinity so they can't possibly be the minimum value
+    fft_bins(1:(fft_size * interp_rate / 2) - bin_count) = Inf;
+    fft_bins((fft_size * interp_rate / 2) + bin_count - 1:end) = Inf;
+
+    % Find the index of the FFT bin with the lowest amplitude
+    [~, center_offset] = min(fft_bins);
+    
+    % Calculate the frequency needed to correct the integer offset, then conver that to radians
+    integer_offset = ((fft_size * interp_rate / 2) - center_offset + 1) * 15e3;
+    radians = 2 * pi * integer_offset / (file_sample_rate * interp_rate);
+
+    % The initial radians measurement was taken well into the burst.  Applying this as is would cause an absolute phase
+    % offset.  The logic below is meant to prevent that problem.
+    radians_scalar = [0:length(burst) - 1];% - offset;
+    
+    % Apply a frequency adjustment
+    burst = burst .* exp(1j * radians * radians_scalar);
+    
+    % Downsample (filter and decimate) the burst samples
+    burst = resample(burst, 1, interp_rate);
+    
     %% Apply low pass filter
     burst = filter(filter_taps, 1, burst);
 
