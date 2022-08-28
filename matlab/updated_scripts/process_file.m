@@ -27,15 +27,16 @@ if (~ isfile(turbo_decoder_path))
 end
 
 %% File Parameters
-enable_plots = 0; % Set to 0 to prevent the plots from popping up
-
-sample_type = 'single';
-file_path = '/opt/dji/collects/2437MHz_30.72MSPS.fc32';
-file_sample_rate = 30.72e6;
-file_freq_offset = 7.5e6; % This file was not recorded with the DroneID signal centered
-
+enable_plots = true;        % Set to false to prevent the plots from popping up
 correlation_threshold = 0.7; % The SNR is pretty good, so using a high correlation score (must be between 0.0 and 1.0)
 chunk_size = 10e6;           % Number of samples to process at a time
+enable_equalizer = true;     % Enable/disable the frequency domain equalizer
+
+%% Paramters that the user must change
+sample_type = 'single';
+file_path = 'YOUR_FILE_NAME_HERE';
+file_sample_rate = YOUR_SAMPLE_RATE_HERE;
+file_freq_offset = 0e6;
 
 %% Low Pass Filter Setup
 signal_bandwidth = 10e6; % The actual occupied bandwidth of the DroneID signal
