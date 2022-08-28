@@ -137,13 +137,9 @@ for burst_idx=1:size(bursts, 1)
     % Calculate the frequency needed to correct the integer offset, then conver that to radians
     integer_offset = ((fft_size * interp_rate / 2) - center_offset + 1) * 15e3;
     radians = 2 * pi * integer_offset / (file_sample_rate * interp_rate);
-
-    % The initial radians measurement was taken well into the burst.  Applying this as is would cause an absolute phase
-    % offset.  The logic below is meant to prevent that problem.
-    radians_scalar = [0:length(burst) - 1];% - offset;
     
     % Apply a frequency adjustment
-    burst = burst .* exp(1j * radians * radians_scalar);
+    burst = burst .* exp(1j * radians * [0:length(burst) - 1]);
     
     % Downsample (filter and decimate) the burst samples
     burst = resample(burst, 1, interp_rate);
