@@ -47,9 +47,15 @@ filter_taps = fir1(filter_tap_count, signal_bandwidth/file_sample_rate); % Creat
 [long_cp_len, short_cp_len] = get_cyclic_prefix_lengths(file_sample_rate);
 fft_size = get_fft_size(file_sample_rate);
 
+% A correlation figure number of -1 will prevent plotting by the find_zc_indices_by_file function
+correlation_fig_number = -1;
+if (enable_plots)
+    correlation_fig_number = 456;
+end
+
 % Making sure that the bursts that are extracted have enough padding for the low pass filter to start up and terminate
 bursts = extract_bursts_from_file(file_path, file_sample_rate, file_freq_offset, correlation_threshold, chunk_size,...
-    filter_tap_count, 'SampleType', sample_type, 'CorrelationFigNum', 456);
+    filter_tap_count, 'SampleType', sample_type, 'CorrelationFigNum', correlation_fig_number);
 
 assert(~isempty(bursts), "Did not find any bursts");
 
