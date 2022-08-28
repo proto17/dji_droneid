@@ -83,6 +83,7 @@ for burst_idx=1:size(bursts, 1)
     if (enable_plots)
         figure(43);
         plot(10 * log10(abs(burst).^2));
+        title('Time domain abs^2 10log10 (original)');
         
         % Plot the FFT, but average it with a single pole IIR filter to make it smoother
         figure(1000);
