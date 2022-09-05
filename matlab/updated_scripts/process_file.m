@@ -193,7 +193,8 @@ for burst_idx=1:size(bursts, 1)
 
     % Get the expected starting index of the symbol to be used for CFO estimation
     zc_start = long_cp_len + (fft_size * 3) + (short_cp_len * 3);
-    zc_start = zc_start + 6;
+    
+    % Extract out the full OFDM symbol (cyclic prefix included)
     cfo_est_symbol = burst(zc_start - short_cp_len:zc_start + fft_size - 1);
 
     % Get the cyclic prefix, and then the copy of the cyclic prefix that exists at the end of the OFDM symbol
