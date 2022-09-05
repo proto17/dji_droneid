@@ -72,13 +72,16 @@ This is known, and a deframer will be added at a later date
 
 # Known Values
 ## Frequencies
-Look in 2.4 GHz for the Drone ID frames.  Might be best to go into the DJI app and tell the downlink to use 5.8 GHz.  This will keep the downlink (and probably uplink) out of 2.4 GHz.  Drone ID will not move from 2.4 GHz
+Look in 2.4/5.8 GHz for the Drone ID frames
 Some frequencies I have noted thus far:
 - 2.4595 GHz
 - 2.4445 GHz
 - 2.4295 GHz
 - 2.4145 GHz
 - 2.3995 GHz
+- 5.7565 GHz
+- 5.7765 GHz
+- 5.7965 GHz
 
 There might be others, but that's just what I've seen
 
