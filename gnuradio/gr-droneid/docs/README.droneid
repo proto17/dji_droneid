@@ -9,25 +9,3 @@ in this package. A quick listing of the details can be found in Python
 after importing by using:
 
     help(droneid)
-
-# Notes
-This module is currently *very much* an Alpha.  Please don't rely on it for *anything*.  It tends to trail behind the MATLAB/Octave code by weeks!
-
-It currently does some very basic functions:
-- Burst detection by using cross correlating for the ZC sequence
-- Burst extraction using the correlation scores from the cross correlation above (see note 1)
-- Coarse CFO estimation and correction (see note 2) 
-- OFDM data carrier extraction
-
-Some things still left to do:
-- Channel equalization using the two ZC sequences (https://github.com/proto17/dji_droneid/blob/main/matlab/updated_scripts/process_file.m#L119-L134 and https://github.com/proto17/dji_droneid/blob/main/matlab/updated_scripts/process_file.m#L155-L166)
-- Function-izing the Turbo decoder and rate matcher (https://github.com/proto17/dji_droneid/blob/main/cpp/remove_turbo.cc) and using the function(s) to deal with Turbo decoding and rate matching to output full frames
-- Parse the frame to spit out something that users can actually use (maybe JSON?)
-- Create a more robust timing offset estimator (likely autocorrelating the ZC sequence(s))
-- Figure out how to deal with integer frequency offsets (currently just able to detect and correct for fractional offsets)
-
-Note 1:
-If there is a large enough frequency offset (on the order of KHz) then the cross correlation of the ZC sequence will produce a spike that's not actually at the start/end of the ZC sequence.  It will be off by some number of samples.  The issue is that the location of the spike is used to determine the start index of the burst, which will in turn determine where each OFDM symbol is assumed to start.  So, having a frequency offset will cause incorrect starting sample offsets which will completely derail the OFDM symbol extraction resulting in garbage constellations
-
-Note 2:
-The current coarse CFO estimate cannot deal with very large offsets.  It looks at the cyclic prefix of one of the OFDM symbols (second symbol for those signals with 9 symbols, first symbol for those with 8) which has a large gap between samples.  This is more useful as a fine frequency offset than coarse.  A possible alternative is to use the ZC sequence(s).  They are symmetrical about the center in the time (and probably frequency?) domain which means it should autocorrelate with itself if you reverse the second half of the correlation window.
