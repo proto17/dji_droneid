@@ -18,10 +18,10 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef INCLUDED_DRONEID_TIME_SYNC_H
-#define INCLUDED_DRONEID_TIME_SYNC_H
+#ifndef INCLUDED_DRONEID_DEMODULATION_H
+#define INCLUDED_DRONEID_DEMODULATION_H
 
-#include <droneid/api.h>
+#include <gnuradio/droneid/api.h>
 #include <gnuradio/sync_block.h>
 
 namespace gr {
@@ -32,17 +32,17 @@ namespace gr {
      * \ingroup droneid
      *
      */
-    class DRONEID_API time_sync : virtual public gr::sync_block
+    class DRONEID_API demodulation : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<time_sync> sptr;
+      typedef std::shared_ptr<demodulation> sptr;
 
       /*!
-       * \brief Return a shared_ptr to a new instance of droneid::time_sync.
+       * \brief Return a shared_ptr to a new instance of droneid::demodulation.
        *
-       * To avoid accidental use of raw pointers, droneid::time_sync's
+       * To avoid accidental use of raw pointers, droneid::demodulation's
        * constructor is in a private implementation
-       * class. droneid::time_sync::make is the public interface for
+       * class. droneid::demodulation::make is the public interface for
        * creating new instances.
        */
       static sptr make(double sample_rate);
@@ -51,5 +51,5 @@ namespace gr {
   } // namespace droneid
 } // namespace gr
 
-#endif /* INCLUDED_DRONEID_TIME_SYNC_H */
+#endif /* INCLUDED_DRONEID_DEMODULATION_H */
 

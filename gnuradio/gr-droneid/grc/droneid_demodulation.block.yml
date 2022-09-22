@@ -3,7 +3,7 @@ label: demodulation
 category: '[droneid]'
 
 templates:
-  imports: import droneid
+  imports: import gnuradio.droneid as droneid
   make: droneid.demodulation(${sample_rate})
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.

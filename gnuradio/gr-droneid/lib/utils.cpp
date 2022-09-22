@@ -37,7 +37,7 @@ std::vector<std::complex<float>> create_zc_sequence(const double sample_rate, co
     sequence[(fft_size / 2) - 1] = 0;
 
     // Create an FFT object that is configured to run an inverse FFT
-    gr::fft::fft_complex ifft(static_cast<int>(fft_size), false, 1);
+    gr::fft::fft_complex_rev ifft(static_cast<int>(fft_size), 1);
 
     // FFT-shift the inputs (swap the left and right halves) and store in the IFFT input buffer
     std::copy(sequence.begin() + (fft_size/2), sequence.begin() + fft_size, ifft.get_inbuf());

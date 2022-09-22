@@ -52,7 +52,7 @@ namespace gr {
             auto zc_sequence = create_zc_sequence(sample_rate_, 600);
             std::for_each(zc_sequence.begin(), zc_sequence.end(), [](std::complex<float> & sample){ sample = std::conj(sample); });
             std::reverse(zc_sequence.begin(), zc_sequence.end());
-            correlator_ptr_ = std::unique_ptr<filter_t>(new filter_t(1, zc_sequence));
+            correlator_ptr_ = std::unique_ptr<filter_t>(new filter_t(zc_sequence));
 
             message_port_register_in(pmt::mp("pdus"));
             message_port_register_out(pmt::mp("pdus"));
