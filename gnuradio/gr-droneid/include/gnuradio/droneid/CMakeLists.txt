@@ -16,5 +16,6 @@ install(FILES
     demodulation.h
     lte_decode.h
     extractor.h
-    normalized_xcorr_estimate.h DESTINATION include/gnuradio/droneid
+    normalized_xcorr_estimate.h
+    time_sync.h DESTINATION include/gnuradio/droneid
 )

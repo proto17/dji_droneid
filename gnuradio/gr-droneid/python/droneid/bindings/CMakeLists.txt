@@ -34,7 +34,8 @@ list(APPEND droneid_python_files
     demodulation_python.cc
     lte_decode_python.cc
     extractor_python.cc
-    normalized_xcorr_estimate_python.cc python_bindings.cc)
+    normalized_xcorr_estimate_python.cc
+    time_sync_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(droneid
    ../../..
