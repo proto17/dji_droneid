@@ -23,6 +23,8 @@ You will need to record DroneID bursts with an SDR, save the samples as 32-bit f
 
 __Currently the C++ program that does Turbo decoding and rate matching is not in the repo.  This will be added in the next week or so__
 
+This branch has the original GNU Radio OOT module for GNU Radio 3.10
+
 List of tasks:
  - Identify ZC sequence (done)
  - Detect ZC sequence (done)
