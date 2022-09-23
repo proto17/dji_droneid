@@ -57,7 +57,7 @@ std::vector<std::complex<float>> misc_utils::create_zc_sequence(const double sam
     sequence[(fft_size / 2)] = 0;
 
     // Create an FFT object that is configured to run an inverse FFT
-    gr::fft::fft_complex_rev ifft(static_cast<int>(fft_size), false);
+    gr::fft::fft_complex_rev ifft(static_cast<int>(fft_size), 1);
 
     // FFT-shift the inputs (swap the left and right halves) and store in the IFFT input buffer
     std::copy(sequence.begin() + (fft_size/2), sequence.begin() + fft_size, ifft.get_inbuf());
@@ -247,7 +247,7 @@ misc_utils::extract_ofdm_symbol_samples(const std::vector<std::complex<float>> &
     std::vector<std::pair<std::vector<std::complex<float>>, std::vector<std::complex<float>>>> outputs(9);
     const auto fft_size = get_fft_size(sample_rate);
     const auto cyclic_prefixes = get_cyclic_prefix_schedule(sample_rate);
-    fft::fft_complex_fwd fft_engine(static_cast<int32_t>(fft_size), true);
+    fft::fft_complex_fwd fft_engine(static_cast<int32_t>(fft_size), 1);
     fft::fft_shift<std::complex<float>> fft_shifter(fft_size);
 
     auto samples_iter = samples.begin() + offset;
@@ -273,7 +273,7 @@ misc_utils::calculate_channel(const std::vector<std::complex<float>> &symbol, co
     assert(symbol.size() == 600);
     std::vector<std::complex<float>> channel(symbol.size(), {0, 0});
     const auto fft_size = get_fft_size(sample_rate);
-    fft::fft_complex_fwd fft_engine(static_cast<int32_t>(fft_size), true);
+    fft::fft_complex_fwd fft_engine(static_cast<int32_t>(fft_size), 1);
     fft::fft_shift<std::complex<float>> fft_shifter(fft_size);
 
     uint32_t root;
