@@ -22,7 +22,7 @@ if(NOT droneid_sources)
 endif(NOT droneid_sources)
 
 add_library(gnuradio-droneid SHARED ${droneid_sources})
-target_link_libraries(gnuradio-droneid gnuradio::gnuradio-runtime)
+target_link_libraries(gnuradio-droneid gnuradio::gnuradio-runtime gnuradio-fft gnuradio-filter)
 target_include_directories(gnuradio-droneid
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>
