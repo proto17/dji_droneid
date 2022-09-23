@@ -7,18 +7,35 @@
 #
 
 ########################################################################
-# Setup dependencies
+# Include python install macros
 ########################################################################
-find_package(Doxygen)
+include(GrPython)
+if(NOT PYTHONINTERP_FOUND)
+    return()
+endif()
+
+add_subdirectory(bindings)
 
 ########################################################################
-# Begin conditional configuration
+# Install python sources
 ########################################################################
-if(ENABLE_DOXYGEN)
+GR_PYTHON_INSTALL(
+    FILES
+    __init__.py
+    DESTINATION ${GR_PYTHON_DIR}/gnuradio/droneid
+)
 
 ########################################################################
-# Add subdirectories
+# Handle the unit tests
 ########################################################################
-add_subdirectory(doxygen)
+include(GrTest)
 
-endif(ENABLE_DOXYGEN)
+set(GR_TEST_TARGET_DEPS gnuradio-droneid)
+
+# Create a package directory that tests can import. It includes everything
+# from `python/`.
+add_custom_target(
+  copy_module_for_tests ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}
+          ${PROJECT_BINARY_DIR}/test_modules/gnuradio/droneid/
+)

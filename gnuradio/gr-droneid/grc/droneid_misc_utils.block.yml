@@ -3,15 +3,23 @@ label: misc_utils
 category: '[droneid]'
 
 templates:
-  imports: import droneid
+  imports: from gnuradio import droneid
   make: droneid.misc_utils()
 
 #  Make one 'parameters' list entry for every parameter you want settable from the GUI.
 #     Keys include:
-#     * id (makes the value accessible as \$keyname, e.g. in the make entry)
+#     * id (makes the value accessible as keyname, e.g. in the make entry)
 #     * label (label shown in the GUI)
 #     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
+#     * default
 parameters:
+- id: parametername_replace_me
+  label: FIX ME:
+  dtype: string
+  default: You need to fill in your grc/droneid_misc_utils.block.yaml
+#- id: ...
+#  label: ...
+#  dtype: ...
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
 #  Keys include:
@@ -21,8 +29,18 @@ parameters:
 #      * vlen (optional - data stream vector length. Default is 1)
 #      * optional (optional - set to 1 for optional inputs. Default is 0)
 inputs:
+#- label: ...
+#  domain: ...
+#  dtype: ...
+#  vlen: ...
+#  optional: ...
 
 outputs:
+#- label: ...
+#  domain: ...
+#  dtype: ...
+#  vlen: ...
+#  optional: ...
 
 #  'file_format' specifies the version of the GRC yml format used in the file
 #  and should usually not be changed.
