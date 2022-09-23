@@ -17,6 +17,7 @@ list(APPEND droneid_sources
     demodulation_impl.cc
     lte_decode.cc
     extractor_impl.cc
+    normalized_xcorr_estimate_impl.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
@@ -61,6 +62,7 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_droneid_sources
+qa_normalized_xcorr_estimate.cc
 qa_extractor.cc
 qa_demodulation.cc
 qa_decode.cc
