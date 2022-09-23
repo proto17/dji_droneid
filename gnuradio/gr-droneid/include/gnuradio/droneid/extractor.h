@@ -18,10 +18,10 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef INCLUDED_DRONEID_DEMODULATION_H
-#define INCLUDED_DRONEID_DEMODULATION_H
+#ifndef INCLUDED_DRONEID_EXTRACTOR_H
+#define INCLUDED_DRONEID_EXTRACTOR_H
 
-#include <droneid/api.h>
+#include <gnuradio/droneid/api.h>
 #include <gnuradio/sync_block.h>
 
 namespace gr {
@@ -32,17 +32,17 @@ namespace gr {
      * \ingroup droneid
      *
      */
-    class DRONEID_API demodulation : virtual public gr::sync_block
+    class DRONEID_API extractor : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<demodulation> sptr;
+      typedef std::shared_ptr<extractor> sptr;
 
       /*!
-       * \brief Return a shared_ptr to a new instance of droneid::demodulation.
+       * \brief Return a shared_ptr to a new instance of droneid::extractor.
        *
-       * To avoid accidental use of raw pointers, droneid::demodulation's
+       * To avoid accidental use of raw pointers, droneid::extractor's
        * constructor is in a private implementation
-       * class. droneid::demodulation::make is the public interface for
+       * class. droneid::extractor::make is the public interface for
        * creating new instances.
        */
       static sptr make(double sample_rate);
@@ -51,5 +51,5 @@ namespace gr {
   } // namespace droneid
 } // namespace gr
 
-#endif /* INCLUDED_DRONEID_DEMODULATION_H */
+#endif /* INCLUDED_DRONEID_EXTRACTOR_H */
 

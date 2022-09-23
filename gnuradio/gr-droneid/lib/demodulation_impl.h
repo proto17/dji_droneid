@@ -21,7 +21,7 @@
 #ifndef INCLUDED_DRONEID_DEMODULATION_IMPL_H
 #define INCLUDED_DRONEID_DEMODULATION_IMPL_H
 
-#include <droneid/demodulation.h>
+#include <gnuradio/droneid/demodulation.h>
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft_shift.h>
 
@@ -37,7 +37,7 @@ namespace gr {
             void write_samples(const std::string &path, const std::complex<float> * samples, uint32_t element_count);
             void write_samples(const std::string & path, const std::vector<std::complex<float>> & samples);
 
-            std::unique_ptr<gr::fft::fft_complex> fft_;
+            std::unique_ptr<gr::fft::fft_complex_fwd> fft_;
             std::unique_ptr<gr::fft::fft_shift<std::complex<float>>> fft_shift_;
             size_t sample_count_;
             uint32_t cfo_cp_len_;

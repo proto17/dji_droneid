@@ -75,7 +75,7 @@ namespace gr {
             std::cout << "FFT SIZE: " << fft_size_ << ", sample rate: " << sample_rate_ << "\n";
 
             zc_ = create_zc_sequence(sample_rate_, 600);
-            fft_ = std::unique_ptr<gr::fft::fft_complex>(new gr::fft::fft_complex(static_cast<int>(fft_size_), true, 1));
+            fft_ = std::unique_ptr<gr::fft::fft_complex_fwd>(new gr::fft::fft_complex_fwd(static_cast<int>(fft_size_), 1));
             fft_shift_ = std::unique_ptr<gr::fft::fft_shift<std::complex<float>>>(new gr::fft::fft_shift<std::complex<float>>(fft_size_));
 
             std::copy(zc_.begin(), zc_.end(), fft_->get_inbuf());

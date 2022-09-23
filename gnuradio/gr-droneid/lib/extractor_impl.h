@@ -21,7 +21,7 @@
 #ifndef INCLUDED_DRONEID_EXTRACTOR_IMPL_H
 #define INCLUDED_DRONEID_EXTRACTOR_IMPL_H
 
-#include <droneid/extractor.h>
+#include <gnuradio/droneid/extractor.h>
 
 namespace gr {
     namespace droneid {

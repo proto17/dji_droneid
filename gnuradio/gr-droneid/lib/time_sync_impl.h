@@ -21,7 +21,7 @@
 #ifndef INCLUDED_DRONEID_TIME_SYNC_IMPL_H
 #define INCLUDED_DRONEID_TIME_SYNC_IMPL_H
 
-#include <droneid/time_sync.h>
+#include <gnuradio/droneid/time_sync.h>
 
 #include <gnuradio/filter/fir_filter.h>
 
