@@ -7,5 +7,6 @@
 #
 
 install(FILES
-    droneid_decode.block.yml DESTINATION share/gnuradio/grc/blocks
+    droneid_decode.block.yml
+    droneid_demodulation.block.yml DESTINATION share/gnuradio/grc/blocks
 )

@@ -12,5 +12,7 @@
 install(FILES
     api.h
     misc_utils.h
-    decode.h DESTINATION include/gnuradio/droneid
+    decode.h
+    demodulation.h
+    lte_decode.h DESTINATION include/gnuradio/droneid
 )

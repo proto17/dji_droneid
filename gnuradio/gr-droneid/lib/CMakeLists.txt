@@ -14,6 +14,8 @@ include(GrPlatform) #define LIB_SUFFIX
 list(APPEND droneid_sources
     misc_utils.cc
     decode_impl.cc
+    demodulation_impl.cc
+    lte_decode.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
@@ -58,6 +60,7 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_droneid_sources
+qa_demodulation.cc
 qa_decode.cc
 )
 # Anything we need to link to for the unit tests go here
