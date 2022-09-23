@@ -18,6 +18,11 @@ Update(15 April 2022): **The main script (matlab/updated_scripts/process_file.m)
 
 The IQ file used in this example will not be made available publicly as it likely contains GPS information about where the drone was when the recording was taken.  The drone used in testing is the DJI Mini 2 with no modifications.  Recordings were taken with an Ettus B205-mini at a sampling rate of 30.72 MSPS.  The signal of interest is in 2.4 GHz and will show up every 600 ms or so.  It will be 10 MHz wide (15.56 MHz with guard carriers).  
 
+# GNU Radio OOT Module
+This branch has the original GNU Radio OOT module for GNU Radio 3.10.  This OOT module should not be used in most cases.  Please use `gr-droneid-update` or `gr-droneid-update-3.10`
+
+The best use of this module is to collect bursts for processing in MATLAB/Octave with `process_file.m`
+
 # How to Process Samples
 You will need to record DroneID bursts with an SDR, save the samples as 32-bit floating point IQ data, and then edit the `matlab/updated_scripts/process_file.m` script to read your file.  If there is a major frequency offset (say you recorded 7 MHz off center) you will need to specify that in the script.
 
