@@ -14,5 +14,6 @@ install(FILES
     misc_utils.h
     decode.h
     demodulation.h
-    lte_decode.h DESTINATION include/gnuradio/droneid
+    lte_decode.h
+    extractor.h DESTINATION include/gnuradio/droneid
 )

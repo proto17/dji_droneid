@@ -25,6 +25,7 @@ namespace py = pybind11;
     void bind_decode(py::module& m);
     void bind_demodulation(py::module& m);
     void bind_lte_decode(py::module& m);
+    void bind_extractor(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -59,5 +60,6 @@ PYBIND11_MODULE(droneid_python, m)
     bind_decode(m);
     bind_demodulation(m);
     bind_lte_decode(m);
+    bind_extractor(m);
     // ) END BINDING_FUNCTION_CALLS
 }
