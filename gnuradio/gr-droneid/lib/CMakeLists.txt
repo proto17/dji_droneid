@@ -13,6 +13,7 @@ include(GrPlatform) #define LIB_SUFFIX
 
 list(APPEND droneid_sources
     misc_utils.cc
+    decode_impl.cc
 )
 
 set(droneid_sources "${droneid_sources}" PARENT_SCOPE)
@@ -23,6 +24,7 @@ endif(NOT droneid_sources)
 
 add_library(gnuradio-droneid SHARED ${droneid_sources})
 target_link_libraries(gnuradio-droneid gnuradio::gnuradio-runtime gnuradio-fft gnuradio-filter)
+target_link_libraries(gnuradio-droneid turbofec boost_filesystem)
 target_include_directories(gnuradio-droneid
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>
@@ -56,6 +58,7 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_droneid_sources
+qa_decode.cc
 )
 # Anything we need to link to for the unit tests go here
 list(APPEND GR_TEST_TARGET_DEPS gnuradio-droneid)

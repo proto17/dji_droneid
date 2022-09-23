@@ -11,5 +11,6 @@
 ########################################################################
 install(FILES
     api.h
-    misc_utils.h DESTINATION include/gnuradio/droneid
+    misc_utils.h
+    decode.h DESTINATION include/gnuradio/droneid
 )

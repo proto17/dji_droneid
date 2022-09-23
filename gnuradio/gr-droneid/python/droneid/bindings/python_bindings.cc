@@ -22,6 +22,7 @@ namespace py = pybind11;
 /**************************************/
 // BINDING_FUNCTION_PROTOTYPES(
     void bind_misc_utils(py::module& m);
+    void bind_decode(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -53,5 +54,6 @@ PYBIND11_MODULE(droneid_python, m)
     /**************************************/
     // BINDING_FUNCTION_CALLS(
     bind_misc_utils(m);
+    bind_decode(m);
     // ) END BINDING_FUNCTION_CALLS
 }
