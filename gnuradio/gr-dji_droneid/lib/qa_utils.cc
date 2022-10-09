@@ -19,27 +19,32 @@ using namespace matlab::engine;
 std::unique_ptr<MATLABEngine> matlab_engine = nullptr;
 matlab::data::ArrayFactory factory;
 
+struct MatlabHandler {
+    MatlabHandler() {
+        matlab_engine = startMATLAB();
+        matlab_engine->eval(u"addpath(genpath('" MATLAB_SOURCE_PATH "'));");
+    }
+
+    ~MatlabHandler() {
+        matlab_engine = nullptr;
+    }
+};
+
+BOOST_GLOBAL_FIXTURE(MatlabHandler);
+
 struct TestFixture {
     TestFixture () {
-        if (matlab_engine == nullptr) {
-            BOOST_TEST_MESSAGE("Starting MATLAB");
-            matlab_engine = startMATLAB();
-            BOOST_TEST_MESSAGE("MATLAB started");
-            matlab_engine->eval(u"addpath(genpath('" MATLAB_SOURCE_PATH "'));");
-            BOOST_TEST_MESSAGE("Added MATLAB source directory " MATLAB_SOURCE_PATH " to the path");
-        } else {
-            BOOST_TEST_MESSAGE("MATLAB already running");
-        }
+        BOOST_REQUIRE(matlab_engine != nullptr);
     }
 
     static void setup() {
+        // Since the MATLAB instance is never reset, the workspace needs to be cleared each time for sanity
         TestFixture::clear_workspace();
     }
 
     ~TestFixture() = default;
 
     static void clear_workspace() {
-        std::cout << "[INFO] Clearing workspace\n";
         matlab_engine->eval(u"clear all;");
     }
 
@@ -65,8 +70,6 @@ struct TestFixture {
         matlab_engine->setVariable("fft_size", factory.createScalar(static_cast<double>(fft_size)));
         matlab_engine->setVariable("symbol_idx", factory.createScalar(static_cast<double>(symbol_idx)));
         matlab_engine->eval(u"zc = create_zc(fft_size, symbol_idx);");
-        matlab_engine->eval(u"fft_size");
-        matlab_engine->eval(u"symbol_idx");
 
         const matlab::data::TypedArray<std::complex<double>> ret = matlab_engine->getVariable("zc");
 
@@ -112,8 +115,9 @@ struct TestFixture {
     }
 };
 
+BOOST_FIXTURE_TEST_SUITE(Utils_Test_Suite, TestFixture);
 
-BOOST_FIXTURE_TEST_CASE(test_utils__get_fft_size, TestFixture)
+BOOST_AUTO_TEST_CASE(test_utils__get_fft_size)
 {
     const std::vector<float> rates = {15.36e6, 30.72e6, 61.44e6};
     for (const auto & rate : rates) {
@@ -126,7 +130,7 @@ BOOST_FIXTURE_TEST_CASE(test_utils__get_fft_size, TestFixture)
     BOOST_REQUIRE_THROW(utils::get_fft_size(10.1e6), std::runtime_error);
 }
 
-BOOST_FIXTURE_TEST_CASE(test_utils__get_data_carrier_indices, TestFixture)
+BOOST_AUTO_TEST_CASE(test_utils__get_data_carrier_indices)
 {
     const std::vector<float> rates = {15.36e6, 30.72e6, 61.44e6};
     for (const auto & rate : rates) {
@@ -137,7 +141,7 @@ BOOST_FIXTURE_TEST_CASE(test_utils__get_data_carrier_indices, TestFixture)
     }
 }
 
-BOOST_FIXTURE_TEST_CASE(test_utils__get_sample_rate, TestFixture) {
+BOOST_AUTO_TEST_CASE(test_utils__get_sample_rate) {
     const std::vector<uint32_t> fft_sizes = {1024, 2048, 4096, 8192, 16384};
     for (const auto & fft_size : fft_sizes) {
         const auto expected = static_cast<float>(fft_size) * utils::CARRIER_SPACING;
@@ -147,7 +151,7 @@ BOOST_FIXTURE_TEST_CASE(test_utils__get_sample_rate, TestFixture) {
     }
 }
 
-BOOST_FIXTURE_TEST_CASE(test_utils__create_zc, TestFixture) {
+BOOST_AUTO_TEST_CASE(test_utils__create_zc) {
     const std::vector<uint32_t> lengths = {1024, 2048, 4096, 8192};
     const std::vector<uint8_t> symbol_indices = {4, 6};
 
@@ -170,7 +174,7 @@ BOOST_FIXTURE_TEST_CASE(test_utils__create_zc, TestFixture) {
     }
 }
 
-BOOST_FIXTURE_TEST_CASE(test_utils__zadoff_chu, TestFixture) {
+BOOST_AUTO_TEST_CASE(test_utils__zadoff_chu) {
     std::vector<uint32_t> roots = {600, 147};
     std::vector<uint32_t> lengths = {601};
 
@@ -185,7 +189,7 @@ BOOST_FIXTURE_TEST_CASE(test_utils__zadoff_chu, TestFixture) {
     }
 }
 
-BOOST_FIXTURE_TEST_CASE(test_utils__get_cyclic_prefix, TestFixture) {
+BOOST_AUTO_TEST_CASE(test_utils__get_cyclic_prefix) {
     std::vector<float> sample_rates = {15.36e6, 30.72e6, 61.44e6};
 
     for (const auto & sample_rate : sample_rates) {
@@ -196,6 +200,8 @@ BOOST_FIXTURE_TEST_CASE(test_utils__get_cyclic_prefix, TestFixture) {
         BOOST_REQUIRE_EQUAL(expected.second, calculated.second);
     }
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 } /* namespace dji_droneid */
 } /* namespace gr */
