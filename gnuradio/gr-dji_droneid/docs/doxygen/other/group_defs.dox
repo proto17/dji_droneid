@@ -1,0 +1,6 @@
+/*!
+ * \defgroup block GNU Radio DJI_DRONEID C++ Signal Processing Blocks
+ * \brief All C++ blocks that can be used from the DJI_DRONEID GNU Radio
+ *        module are listed here or in the subcategories below.
+ *
+ */
