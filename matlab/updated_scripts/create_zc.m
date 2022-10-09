@@ -20,14 +20,9 @@ function [samples] = create_zc(fft_size, symbol_index)
     else
         root = 147;
     end
-
-    root
     
     % Would use MATLAB's zadoffChuSeq function, but Octave doesn't have that
     % The logic below was tested against the MATLAB function
-%     vals = pi * root * (0:600) .* (1:601) / 601;
-%     zc = cos(vals) + (1j * sin(vals));
-
     zc = reshape(exp(-1j * pi * root * (0:600) .* (1:601) / 601), [], 1);
     
     % Remove the middle value (this would be DC in the FFT)
