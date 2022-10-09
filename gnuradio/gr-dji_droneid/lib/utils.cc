@@ -15,9 +15,6 @@
 namespace gr {
 namespace dji_droneid {
 
-utils::utils() {}
-
-utils::~utils() {}
 std::vector<uint32_t> utils::get_data_carrier_indices(const float sample_rate)
 {
     const auto fft_size = get_fft_size(sample_rate);
