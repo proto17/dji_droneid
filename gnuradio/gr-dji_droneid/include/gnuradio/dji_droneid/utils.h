@@ -81,6 +81,8 @@ public:
      */
     static std::pair<uint16_t, uint16_t> get_cyclic_prefix_lengths(float sample_rate);
 
+    static std::complex<float> mean_fast(const std::complex<float> * samples, uint32_t sample_count);
+
 private:
 };
 

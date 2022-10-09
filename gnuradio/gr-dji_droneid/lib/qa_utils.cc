@@ -113,6 +113,18 @@ struct TestFixture {
             static_cast<uint16_t>(short_cp_len[0])
         };
     }
+
+    static std::complex<float> mean(const std::vector<std::complex<float>> & samples) {
+        matlab_engine->setVariable("samples", factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+        matlab_engine->eval(u"m = mean(samples);");
+        const matlab::data::TypedArray<std::complex<float>> mean_val = matlab_engine->getVariable("m");
+
+        BOOST_REQUIRE_EQUAL(mean_val.getNumberOfElements(), 1);
+
+        matlab_engine->eval(u"clear samples m");
+
+        return mean_val[0];
+    }
 };
 
 BOOST_FIXTURE_TEST_SUITE(Utils_Test_Suite, TestFixture);
@@ -198,6 +210,29 @@ BOOST_AUTO_TEST_CASE(test_utils__get_cyclic_prefix) {
 
         BOOST_REQUIRE_EQUAL(expected.first, calculated.first);
         BOOST_REQUIRE_EQUAL(expected.second, calculated.second);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_utils__mean_fast) {
+    const uint32_t iters = 100;
+    const uint32_t length = 10000;
+
+    matlab_engine->setVariable("sample_count", factory.createScalar(static_cast<double>(length)));
+    for (uint32_t iter = 0; iter < iters; iter++) {
+        matlab_engine->eval(u"samples = single(complex(randn(1, sample_count), randn(1, sample_count)));");
+        const matlab::data::TypedArray<std::complex<float>> samples_array = matlab_engine->getVariable("samples");
+        const std::vector<std::complex<float>> samples(samples_array.begin(), samples_array.end());
+
+        const auto expected = mean(samples);
+        const auto calculated = utils::mean_fast(&samples[0], samples.size());
+
+        // MATLAB does all of its arithmetic in double precision, and the mean_fast function does everything in single
+        // This means there is going to be a large delta between the values simply due to rounding errors.  The value
+        // below is a percentage (eg 0.2 == a 0.2% delta) that the difference can be before failing the test
+        const auto accuracy = 0.2;
+
+        BOOST_REQUIRE_CLOSE(expected.real(), calculated.real(), accuracy);
+        BOOST_REQUIRE_CLOSE(expected.imag(), calculated.imag(), accuracy);
     }
 }
 

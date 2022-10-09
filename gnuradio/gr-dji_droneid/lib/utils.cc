@@ -11,6 +11,7 @@
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft_shift.h>
 #include <fftw3.h>
+#include <volk/volk.h>
 
 namespace gr {
 namespace dji_droneid {
@@ -128,6 +129,23 @@ std::pair<uint16_t, uint16_t> utils::get_cyclic_prefix_lengths(const float sampl
         static_cast<uint16_t>((1.0 / 192e3) * sample_rate),
         static_cast<uint16_t>((0.0000046875 * sample_rate))
     );
+}
+
+std::complex<float> utils::mean_fast(const std::complex<float> * const samples, const uint32_t sample_count)
+{
+    // Treat the vector of complex floats as a single vector of float values
+    auto sample_floats = reinterpret_cast<const float *>(samples);
+    float real = 0, imag = 0;
+
+    for (uint32_t idx = 0; idx < sample_count; idx++) {
+        real += *sample_floats++;
+        imag += *sample_floats++;
+    }
+
+    real = real / static_cast<float>(sample_count);
+    imag = imag / static_cast<float>(sample_count);
+
+    return {real, imag};
 }
 
 } /* namespace dji_droneid */
