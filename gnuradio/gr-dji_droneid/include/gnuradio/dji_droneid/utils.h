@@ -81,8 +81,16 @@ public:
      */
     static std::pair<uint16_t, uint16_t> get_cyclic_prefix_lengths(float sample_rate);
 
+    /**
+     * Calculate the mean of a complex vector
+     * @param samples Pointer to complex vector
+     * @param sample_count Number of samples in the complex vector
+     * @return Mean of the complex vector
+     */
     static std::complex<float> mean_fast(const std::complex<float> * samples, uint32_t sample_count);
 
+    static float variance_no_mean(const std::complex<float> * samples, uint32_t sample_count);
+    static float variance(const std::complex<float> * samples, uint32_t sample_count);
 private:
 };
 

@@ -125,6 +125,35 @@ struct TestFixture {
 
         return mean_val[0];
     }
+
+    static float var(const std::vector<std::complex<float>> & samples) {
+        matlab_engine->setVariable("samples", factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+        matlab_engine->eval(u"output = single(var(samples));");
+        const matlab::data::TypedArray<float> output = matlab_engine->getVariable("output");
+        matlab_engine->eval(u"clear output samples");
+        return output[0];
+    }
+
+    static std::vector<std::complex<float>> remove_mean(const std::vector<std::complex<float>> & samples) {
+        matlab_engine->setVariable("samples", factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+        matlab_engine->eval(u"samples = single(samples - mean(samples));");
+        const matlab::data::TypedArray<std::complex<float>> output_samples = matlab_engine->getVariable("samples");
+        matlab_engine->eval(u"clear samples");
+
+        BOOST_REQUIRE_EQUAL(output_samples.getNumberOfElements(), samples.size());
+
+        return {output_samples.begin(), output_samples.end()};
+    }
+
+    static std::vector<std::complex<float>> create_test_vector(const uint32_t sample_count) {
+        matlab_engine->setVariable("sample_count", factory.createScalar(static_cast<double>(sample_count)));
+        matlab_engine->eval(u"samples = single(complex(randn(1, sample_count), randn(1, sample_count)));");
+        const matlab::data::TypedArray<std::complex<float>> samples_array = matlab_engine->getVariable("samples");
+        std::vector<std::complex<float>> samples(samples_array.begin(), samples_array.end());
+        matlab_engine->eval(u"clear samples");
+
+        return samples;
+    }
 };
 
 BOOST_FIXTURE_TEST_SUITE(Utils_Test_Suite, TestFixture);
@@ -233,6 +262,34 @@ BOOST_AUTO_TEST_CASE(test_utils__mean_fast) {
 
         BOOST_REQUIRE_CLOSE(expected.real(), calculated.real(), accuracy);
         BOOST_REQUIRE_CLOSE(expected.imag(), calculated.imag(), accuracy);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_utils__variance) {
+    const uint32_t iters = 100;
+    const uint32_t length = 10000;
+
+    for (auto iter = decltype(iters){0}; iter < iters; iter++) {
+        const auto samples = create_test_vector(length);
+
+        const auto expected = var(samples);
+        const auto calculated = utils::variance(&samples[0], samples.size());
+
+        BOOST_REQUIRE_CLOSE(expected, calculated, 0.002);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_utils__variance_no_mean) {
+    const uint32_t iters = 100;
+    const uint32_t length = 10000;
+
+    for (auto iter = decltype(iters){0}; iter < iters; iter++) {
+        const auto samples = remove_mean(create_test_vector(length));
+
+        const auto expected = var(samples);
+        const auto calculated = utils::variance_no_mean(&samples[0], samples.size());
+
+        BOOST_REQUIRE_CLOSE(expected, calculated, 0.002);
     }
 }
 

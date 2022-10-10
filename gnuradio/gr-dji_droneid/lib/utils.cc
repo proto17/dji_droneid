@@ -148,5 +148,29 @@ std::complex<float> utils::mean_fast(const std::complex<float> * const samples, 
     return {real, imag};
 }
 
+float utils::variance_no_mean(const std::complex<float> * const samples, const uint32_t sample_count)
+{
+    float total = 0;
+
+    for (auto idx = decltype(sample_count){0}; idx < sample_count; idx++) {
+        const auto & sample = samples[idx];
+        total += (sample.real() * sample.real()) + (sample.imag() * sample.imag());
+    }
+
+    return total / static_cast<float>(sample_count - 1);
+}
+float utils::variance(const std::complex<float> * const samples, const uint32_t sample_count)
+{
+    float total = 0;
+    const auto mean = mean_fast(samples, sample_count);
+
+    for (auto idx = decltype(sample_count){0}; idx < sample_count; idx++) {
+        auto sample = samples[idx] - mean;
+        total += (sample.real() * sample.real()) + (sample.imag() * sample.imag());
+    }
+
+    return total / static_cast<float>(sample_count - 1);
+}
+
 } /* namespace dji_droneid */
 } /* namespace gr */
