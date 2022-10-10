@@ -89,7 +89,23 @@ public:
      */
     static std::complex<float> mean_fast(const std::complex<float> * samples, uint32_t sample_count);
 
+    /**
+     * Calculate the variance of a complex vector where the mean is already zero
+     * @param samples Pointer to complex vector
+     * @param sample_count Number of samples in the complex vector
+     * @return Variance of the complex vector
+     */
     static float variance_no_mean(const std::complex<float> * samples, uint32_t sample_count);
+
+    /**
+     * Calculate the variance of a complex vector where the mean is not known to be zero
+     *
+     * This function is mostly the same as utils::variance_no_mean but does have to calculate the
+     * mean value of the input vector and subtract it from each sample, so this will take longer
+     * @param samples Pointer to complex vector
+     * @param sample_count Number of samples in the complex vector
+     * @return Variance of the complex vector
+     */
     static float variance(const std::complex<float> * samples, uint32_t sample_count);
 private:
 };
