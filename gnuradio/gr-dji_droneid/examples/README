@@ -1,3 +1,5 @@
-It is considered good practice to add examples in here to demonstrate the
-functionality of your OOT module. Python scripts, GRC flow graphs or other
-code can go here.
+The `autocorrelator.grc` graph is just a demonstration of how to detect DroneID frames without any OOT modules.
+It does still require the use of the GNU Radio module as there are functions in the OOT that are needed.  Just no
+normal OOT blocks required.
+
+This ended up being a lot faster than doing the coding by hand, so huzzah to the GNU Radio devs!
