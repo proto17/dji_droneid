@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(341b0421657c63a408a05e68560d4ff8)                     */
+/* BINDTOOL_HEADER_FILE_HASH(2b797448fb8ea6ebcdf63ff38c33eb3c)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -77,6 +77,37 @@ void bind_utils(py::module& m)
                     &utils::get_cyclic_prefix_lengths,
                     py::arg("sample_rate"),
                     D(utils, get_cyclic_prefix_lengths))
+
+
+        .def_static("mean_fast",
+                    &utils::mean_fast,
+                    py::arg("samples"),
+                    py::arg("sample_count"),
+                    D(utils, mean_fast))
+
+
+        .def_static("variance_no_mean",
+                    &utils::variance_no_mean,
+                    py::arg("samples"),
+                    py::arg("sample_count"),
+                    D(utils, variance_no_mean))
+
+
+        .def_static("variance",
+                    &utils::variance,
+                    py::arg("samples"),
+                    py::arg("sample_count"),
+                    D(utils, variance))
+
+
+        .def_static("variance_vector",
+                    &utils::variance_vector,
+                    py::arg("samples"),
+                    D(utils, variance_vector))
+
+
+        .def_static(
+            "conj_vector", &utils::conj_vector, py::arg("samples"), D(utils, conj_vector))
 
         ;
 }

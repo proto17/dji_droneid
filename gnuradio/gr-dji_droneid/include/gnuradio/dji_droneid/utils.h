@@ -107,6 +107,24 @@ public:
      * @return Variance of the complex vector
      */
     static float variance(const std::complex<float> * samples, uint32_t sample_count);
+
+    /**
+     * Calculate the variance of a complex vector where the mean is not known to be zero
+     *
+     * This function is mostly the same as utils::variance_no_mean but does have to calculate the
+     * mean value of the input vector and subtract it from each sample, so this will take longer
+     * @param samples Vector of complex samples
+     * @return Variance of the complex vector
+     */
+    static float variance_vector(const std::vector<std::complex<float>> & samples);
+
+    /**
+     * Get the conjugate of the provided vector
+     * @param samples Vector of complex samples
+     * @return Conjugate of the input sample vector
+     */
+    static std::vector<std::complex<float>> conj_vector(const std::vector<std::complex<float>> & samples);
+
 private:
 };
 

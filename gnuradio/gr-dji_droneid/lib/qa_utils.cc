@@ -145,6 +145,17 @@ struct TestFixture {
         return {output_samples.begin(), output_samples.end()};
     }
 
+    static std::vector<std::complex<float>> conj(const std::vector<std::complex<float>> & samples) {
+        matlab_engine->setVariable("samples", factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+        matlab_engine->eval(u"samples = single(conj(samples));");
+        const matlab::data::TypedArray<std::complex<float>> output_samples = matlab_engine->getVariable("samples");
+        matlab_engine->eval(u"clear samples");
+
+        BOOST_REQUIRE_EQUAL(output_samples.getNumberOfElements(), samples.size());
+
+        return {output_samples.begin(), output_samples.end()};
+    }
+
     static std::vector<std::complex<float>> create_test_vector(const uint32_t sample_count) {
         matlab_engine->setVariable("sample_count", factory.createScalar(static_cast<double>(sample_count)));
         matlab_engine->eval(u"samples = single(complex(randn(1, sample_count), randn(1, sample_count)));");
@@ -279,6 +290,20 @@ BOOST_AUTO_TEST_CASE(test_utils__variance) {
     }
 }
 
+BOOST_AUTO_TEST_CASE(test_utils__variance_vector) {
+    const uint32_t iters = 100;
+    const uint32_t length = 10000;
+
+    for (auto iter = decltype(iters){0}; iter < iters; iter++) {
+        const auto samples = create_test_vector(length);
+
+        const auto expected = var(samples);
+        const auto calculated = utils::variance_vector(samples);
+
+        BOOST_REQUIRE_CLOSE(expected, calculated, 0.002);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(test_utils__variance_no_mean) {
     const uint32_t iters = 100;
     const uint32_t length = 10000;
@@ -290,6 +315,20 @@ BOOST_AUTO_TEST_CASE(test_utils__variance_no_mean) {
         const auto calculated = utils::variance_no_mean(&samples[0], samples.size());
 
         BOOST_REQUIRE_CLOSE(expected, calculated, 0.002);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_utils__conj_vector) {
+    const uint32_t iters = 100;
+    const uint32_t length = 10000;
+
+    for (auto iter = decltype(iters){0}; iter < iters; iter++) {
+        const auto samples = create_test_vector(length);
+
+        const auto expected = conj(samples);
+        const auto calculated = utils::conj_vector(samples);
+
+        BOOST_REQUIRE_EQUAL_COLLECTIONS(expected.begin(), expected.end(), calculated.begin(), calculated.end());
     }
 }
 

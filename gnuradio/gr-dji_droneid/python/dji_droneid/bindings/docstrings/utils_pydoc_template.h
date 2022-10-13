@@ -40,3 +40,18 @@ static const char* __doc_gr_dji_droneid_utils_create_zc = R"doc()doc";
 
 
 static const char* __doc_gr_dji_droneid_utils_get_cyclic_prefix_lengths = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_mean_fast = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_variance_no_mean = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_variance = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_variance_vector = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_conj_vector = R"doc()doc";

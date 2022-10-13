@@ -172,5 +172,25 @@ float utils::variance(const std::complex<float> * const samples, const uint32_t 
     return total / static_cast<float>(sample_count - 1);
 }
 
+std::vector<std::complex<float>>
+utils::conj_vector(const std::vector<std::complex<float>>& samples)
+{
+    std::vector<std::complex<float>> output(samples.size());
+    for (auto idx = decltype(samples.size()){0}; idx < samples.size(); idx++) {
+        const auto & sample = samples[idx];
+        output[idx] = {
+            sample.real(),
+            -sample.imag()
+        };
+    }
+
+    return output;
+}
+
+float utils::variance_vector(const std::vector<std::complex<float>>& samples)
+{
+    return variance(&samples[0], samples.size());
+}
+
 } /* namespace dji_droneid */
 } /* namespace gr */
