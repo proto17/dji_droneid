@@ -22,7 +22,7 @@ if(NOT dji_droneid_sources)
 endif(NOT dji_droneid_sources)
 
 add_library(gnuradio-dji_droneid SHARED ${dji_droneid_sources})
-target_link_libraries(gnuradio-dji_droneid gnuradio::gnuradio-runtime gnuradio-fft fftw3)
+target_link_libraries(gnuradio-dji_droneid gnuradio::gnuradio-runtime gnuradio-fft fftw3 gnuradio-blocks gnuradio-filter)
 target_include_directories(gnuradio-dji_droneid
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>
@@ -92,6 +92,7 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_dji_droneid_sources
+        # Only tests that do not require MATLAB will live here
 )
 # Anything we need to link to for the unit tests go here
 list(APPEND GR_TEST_TARGET_DEPS gnuradio-dji_droneid)
