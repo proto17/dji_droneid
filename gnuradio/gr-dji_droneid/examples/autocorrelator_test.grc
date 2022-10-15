@@ -56,6 +56,29 @@ blocks:
     coordinate: [552, 8.0]
     rotation: 0
     state: true
+- name: burst_threshold
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Burst Detection Threshold
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    outputmsgname: value
+    rangeType: float
+    showports: 'False'
+    start: '0'
+    step: '0.05'
+    stop: '1'
+    value: '.7'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2312, 8.0]
+    rotation: 0
+    state: true
 - name: channels_2ghz
   id: variable
   parameters:
@@ -211,6 +234,18 @@ blocks:
     coordinate: [400, 8.0]
     rotation: 0
     state: true
+- name: long_cp_len
+  id: variable
+  parameters:
+    comment: ''
+    value: dji_droneid.utils.get_cyclic_prefix_lengths(samp_rate)[0]
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2176, 92.0]
+    rotation: 0
+    state: enabled
 - name: samp_rate
   id: variable
   parameters:
@@ -221,6 +256,18 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [248, 4.0]
+    rotation: 0
+    state: enabled
+- name: short_cp_len
+  id: variable
+  parameters:
+    comment: ''
+    value: dji_droneid.utils.get_cyclic_prefix_lengths(samp_rate)[1]
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2176, 180.0]
     rotation: 0
     state: enabled
 - name: zc_seq
@@ -235,177 +282,23 @@ blocks:
     coordinate: [1960, 12.0]
     rotation: 0
     state: enabled
-- name: analog_const_source_x_0
-  id: analog_const_source_x
+- name: blocks_delay_0
+  id: blocks_delay
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    const: '0'
+    delay: (fft_size * 4) + (short_cp_len * 3) + long_cp_len + fft_size
     maxoutbuf: '0'
     minoutbuf: '0'
-    type: float
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1056, 1012.0]
-    rotation: 180
-    state: true
-- name: blocks_complex_to_mag_1
-  id: blocks_complex_to_mag
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1992, 932.0]
-    rotation: 0
-    state: true
-- name: blocks_complex_to_mag_squared_0
-  id: blocks_complex_to_mag_squared
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1048, 580.0]
-    rotation: 0
-    state: true
-- name: blocks_complex_to_mag_squared_1
-  id: blocks_complex_to_mag_squared
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1048, 1140.0]
-    rotation: 0
-    state: true
-- name: blocks_divide_xx_0
-  id: blocks_divide_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
+    num_ports: '1'
     type: complex
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1712, 932.0]
-    rotation: 0
-    state: true
-- name: blocks_float_to_complex_0
-  id: blocks_float_to_complex
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1056, 948.0]
-    rotation: 0
-    state: true
-- name: blocks_moving_average_xx_0
-  id: blocks_moving_average_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    length: fft_size
-    max_iter: '4000'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    scale: 1 / (fft_size - 1)
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1048, 644.0]
-    rotation: 180
-    state: true
-- name: blocks_multiply_const_xx_0
-  id: blocks_multiply_const_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: 1 / fft_size
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1376, 476.0]
-    rotation: 0
-    state: true
-- name: blocks_multiply_const_xx_0_0
-  id: blocks_multiply_const_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: dji_droneid.utils.variance_vector(zc_seq)
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1056, 788.0]
-    rotation: 0
-    state: true
-- name: blocks_nlog10_ff_0
-  id: blocks_nlog10_ff
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    k: '0'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    n: '10'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [2040, 1132.0]
+    coordinate: [1008, 436.0]
     rotation: 0
     state: true
 - name: blocks_selector_0
@@ -431,41 +324,37 @@ blocks:
     coordinate: [880, 208.0]
     rotation: 0
     state: disabled
-- name: blocks_transcendental_0
-  id: blocks_transcendental
+- name: dji_droneid_burst_extractor_0
+  id: dji_droneid_burst_extractor
   parameters:
     affinity: ''
     alias: ''
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    name: sqrt
-    type: float
+    sample_rate: samp_rate
+    threshold: burst_threshold
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1056, 868.0]
-    rotation: 180
+    coordinate: [1400, 456.0]
+    rotation: 0
     state: true
-- name: fft_filter_xxx_0
-  id: fft_filter_xxx
+- name: dji_droneid_detector_0
+  id: dji_droneid_detector
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    decim: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
-    nthreads: '1'
-    samp_delay: '0'
-    taps: dji_droneid.utils.conj_vector(zc_seq)
-    type: ccc
+    sample_rate: samp_rate
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1056, 452.0]
+    coordinate: [968, 532.0]
     rotation: 0
     state: true
 - name: filter_fft_low_pass_filter_0
@@ -880,7 +769,7 @@ blocks:
     coordinate: [136, 360.0]
     rotation: 0
     state: enabled
-- name: qtgui_time_sink_x_0
+- name: qtgui_time_sink_x_1
   id: qtgui_time_sink_x
   parameters:
     affinity: ''
@@ -908,11 +797,11 @@ blocks:
     color8: dark red
     color9: dark green
     comment: ''
-    ctrlpanel: 'True'
+    ctrlpanel: 'False'
     entags: 'True'
     grid: 'False'
     gui_hint: ''
-    label1: Correlator Output
+    label1: Signal 1
     label10: Signal 10
     label2: Signal 2
     label3: Signal 3
@@ -934,7 +823,7 @@ blocks:
     marker8: '-1'
     marker9: '-1'
     name: '""'
-    nconnections: '2'
+    nconnections: '1'
     size: '1024'
     srate: samp_rate
     stemplot: 'False'
@@ -954,7 +843,7 @@ blocks:
     tr_mode: qtgui.TRIG_MODE_FREE
     tr_slope: qtgui.TRIG_SLOPE_POS
     tr_tag: '""'
-    type: float
+    type: msg_complex
     update_time: '0.10'
     width1: '1'
     width10: '1'
@@ -974,28 +863,18 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2352, 996.0]
+    coordinate: [1856, 456.0]
     rotation: 0
-    state: true
+    state: enabled
 
 connections:
-- [analog_const_source_x_0, '0', blocks_float_to_complex_0, '1']
-- [blocks_complex_to_mag_1, '0', qtgui_time_sink_x_0, '0']
-- [blocks_complex_to_mag_squared_0, '0', blocks_moving_average_xx_0, '0']
-- [blocks_complex_to_mag_squared_1, '0', blocks_nlog10_ff_0, '0']
-- [blocks_divide_xx_0, '0', blocks_complex_to_mag_1, '0']
-- [blocks_float_to_complex_0, '0', blocks_divide_xx_0, '1']
-- [blocks_moving_average_xx_0, '0', blocks_multiply_const_xx_0_0, '0']
-- [blocks_multiply_const_xx_0, '0', blocks_divide_xx_0, '0']
-- [blocks_multiply_const_xx_0_0, '0', blocks_transcendental_0, '0']
-- [blocks_nlog10_ff_0, '0', qtgui_time_sink_x_0, '1']
+- [blocks_delay_0, '0', dji_droneid_burst_extractor_0, '0']
 - [blocks_selector_0, '0', fosphor_glfw_sink_c_0, '0']
-- [blocks_transcendental_0, '0', blocks_float_to_complex_0, '0']
-- [fft_filter_xxx_0, '0', blocks_multiply_const_xx_0, '0']
-- [filter_fft_low_pass_filter_0, '0', blocks_complex_to_mag_squared_0, '0']
-- [filter_fft_low_pass_filter_0, '0', blocks_complex_to_mag_squared_1, '0']
+- [dji_droneid_burst_extractor_0, bursts, qtgui_time_sink_x_1, in]
+- [dji_droneid_detector_0, '0', dji_droneid_burst_extractor_0, '1']
+- [filter_fft_low_pass_filter_0, '0', blocks_delay_0, '0']
 - [filter_fft_low_pass_filter_0, '0', blocks_selector_0, '1']
-- [filter_fft_low_pass_filter_0, '0', fft_filter_xxx_0, '0']
+- [filter_fft_low_pass_filter_0, '0', dji_droneid_detector_0, '0']
 - [osmosdr_source_0, '0', blocks_selector_0, '0']
 - [osmosdr_source_0, '0', filter_fft_low_pass_filter_0, '0']
 
