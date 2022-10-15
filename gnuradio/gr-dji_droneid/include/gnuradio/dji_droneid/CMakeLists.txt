@@ -11,5 +11,6 @@
 ########################################################################
 install(FILES
     api.h
-    utils.h DESTINATION include/gnuradio/dji_droneid
+    utils.h
+    burst_extractor.h DESTINATION include/gnuradio/dji_droneid
 )

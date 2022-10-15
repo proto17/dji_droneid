@@ -13,6 +13,7 @@ include(GrPlatform) #define LIB_SUFFIX
 
 list(APPEND dji_droneid_sources
     utils.cc
+    burst_extractor_impl.cc
 )
 
 set(dji_droneid_sources "${dji_droneid_sources}" PARENT_SCOPE)
@@ -22,7 +23,8 @@ if(NOT dji_droneid_sources)
 endif(NOT dji_droneid_sources)
 
 add_library(gnuradio-dji_droneid SHARED ${dji_droneid_sources})
-target_link_libraries(gnuradio-dji_droneid gnuradio::gnuradio-runtime gnuradio-fft fftw3 gnuradio-blocks gnuradio-filter)
+target_link_libraries(gnuradio-dji_droneid gnuradio::gnuradio-runtime gnuradio-fft
+        fftw3 gnuradio-blocks gnuradio-filter gnuradio-analog)
 target_include_directories(gnuradio-dji_droneid
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>

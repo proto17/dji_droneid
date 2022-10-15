@@ -29,7 +29,9 @@ include(GrPybind)
 ########################################################################
 
 list(APPEND dji_droneid_python_files
-    utils_python.cc python_bindings.cc)
+    utils_python.cc
+    burst_extractor_python.cc
+    python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dji_droneid
    ../../..
