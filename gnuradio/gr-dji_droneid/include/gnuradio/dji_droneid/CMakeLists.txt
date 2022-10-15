@@ -12,5 +12,6 @@
 install(FILES
     api.h
     utils.h
-    burst_extractor.h DESTINATION include/gnuradio/dji_droneid
+    burst_extractor.h
+    detector.h DESTINATION include/gnuradio/dji_droneid
 )

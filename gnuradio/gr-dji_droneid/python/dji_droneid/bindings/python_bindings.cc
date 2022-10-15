@@ -23,6 +23,7 @@ namespace py = pybind11;
 // BINDING_FUNCTION_PROTOTYPES(
     void bind_utils(py::module& m);
     void bind_burst_extractor(py::module& m);
+    void bind_detector(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -53,5 +54,6 @@ PYBIND11_MODULE(dji_droneid_python, m)
     // BINDING_FUNCTION_CALLS(
     bind_utils(m);
     bind_burst_extractor(m);
+    bind_detector(m);
     // ) END BINDING_FUNCTION_CALLS
 }

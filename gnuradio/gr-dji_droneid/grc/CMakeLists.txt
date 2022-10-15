@@ -7,5 +7,6 @@
 #
 
 install(FILES
-    dji_droneid_burst_extractor.block.yml DESTINATION share/gnuradio/grc/blocks
+    dji_droneid_burst_extractor.block.yml
+    dji_droneid_detector.block.yml DESTINATION share/gnuradio/grc/blocks
 )

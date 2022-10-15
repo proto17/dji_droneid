@@ -14,6 +14,7 @@ include(GrPlatform) #define LIB_SUFFIX
 list(APPEND dji_droneid_sources
     utils.cc
     burst_extractor_impl.cc
+    detector_impl.cc
 )
 
 set(dji_droneid_sources "${dji_droneid_sources}" PARENT_SCOPE)
