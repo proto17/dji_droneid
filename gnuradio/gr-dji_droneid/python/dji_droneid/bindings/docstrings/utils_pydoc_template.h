@@ -55,3 +55,36 @@ static const char* __doc_gr_dji_droneid_utils_variance_vector = R"doc()doc";
 
 
 static const char* __doc_gr_dji_droneid_utils_conj_vector = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_xcorr_in_place = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_xcorr_vector = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_mag_squared = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_mag_squared_vector_in_place = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_mag_squared_vector = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_get_burst_sample_count = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_mag_vector = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_write_samples = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_write_samples_vector = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_interpolate = R"doc()doc";
+
+
+static const char* __doc_gr_dji_droneid_utils_filter = R"doc()doc";

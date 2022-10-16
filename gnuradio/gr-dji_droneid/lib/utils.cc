@@ -10,6 +10,7 @@
 
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft_shift.h>
+#include <gnuradio/filter/fft_filter.h>
 #include <fftw3.h>
 #include <volk/volk.h>
 
@@ -159,6 +160,7 @@ float utils::variance_no_mean(const std::complex<float> * const samples, const u
 
     return total / static_cast<float>(sample_count - 1);
 }
+
 float utils::variance(const std::complex<float> * const samples, const uint32_t sample_count)
 {
     float total = 0;
@@ -190,6 +192,137 @@ utils::conj_vector(const std::vector<std::complex<float>>& samples)
 float utils::variance_vector(const std::vector<std::complex<float>>& samples)
 {
     return variance(&samples[0], samples.size());
+}
+
+uint32_t utils::xcorr_in_place(const std::complex<float> * const samples,
+                           const std::complex<float> * const pattern,
+                           std::complex<float> * const output,
+                           const uint32_t sample_count,
+                           const uint32_t pattern_sample_count,
+                           const bool needs_conj)
+{
+    if (sample_count < pattern_sample_count) {
+        throw std::runtime_error("Pattern count cannot be greater than sample count");
+    }
+
+    if (sample_count == pattern_sample_count) {
+        throw std::runtime_error("Equal pattern count and sample count is not supported at this time");
+    }
+
+    const auto total_steps = sample_count - pattern_sample_count;
+
+    if (needs_conj) {
+        for (auto idx = decltype(total_steps){ 0 }; idx < total_steps; idx++) {
+            volk_32fc_x2_conjugate_dot_prod_32fc(
+                output + idx, samples + idx, pattern, pattern_sample_count);
+        }
+    } else {
+        for (auto idx = decltype(total_steps){ 0 }; idx < total_steps; idx++) {
+            volk_32fc_x2_dot_prod_32fc(
+                output + idx, samples + idx, pattern, pattern_sample_count);
+        }
+    }
+
+    return total_steps;
+}
+
+std::vector<std::complex<float>>
+utils::xcorr_vector(const std::vector<std::complex<float>>& samples,
+                    const std::vector<std::complex<float>>& pattern, const bool needs_conj)
+{
+    if (samples.size() < pattern.size()) {
+        throw std::runtime_error("Pattern count cannot be greater than sample count");
+    }
+
+    if (samples.size() == pattern.size()) {
+        throw std::runtime_error("Equal pattern count and sample count is not supported at this time");
+    }
+
+    std::vector<std::complex<float>> output(samples.size() - pattern.size());
+
+    xcorr_in_place(&samples[0], &pattern[0], &output[0], samples.size(), pattern.size(), needs_conj);
+
+    return output;
+}
+
+void utils::mag_squared(const std::complex<float> * const samples,
+                        float * const output,
+                        const uint32_t sample_count)
+{
+    volk_32fc_magnitude_squared_32f(output, samples, sample_count);
+}
+
+void utils::mag_squared_vector_in_place(const std::vector<std::complex<float>>& samples,
+                                        std::vector<float>& output)
+{
+    mag_squared(&samples[0], &output[0], samples.size());
+}
+
+std::vector<float>
+utils::mag_squared_vector(const std::vector<std::complex<float>>& samples)
+{
+    std::vector<float> output(samples.size());
+    mag_squared_vector_in_place(samples, output);
+    return output;
+}
+
+uint32_t utils::get_burst_sample_count(const float sample_rate) {
+    const auto fft_size = get_fft_size(sample_rate);
+    const auto [long_cp_len, short_cp_len] = get_cyclic_prefix_lengths(sample_rate);
+
+    return (fft_size * 9) + long_cp_len + (short_cp_len * 8);
+}
+
+std::vector<float> utils::mag_vector(const std::vector<std::complex<float>>& samples)
+{
+    std::vector<float> output(samples.size());
+    volk_32fc_magnitude_32f(&output[0], &samples[0], samples.size());
+    return output;
+}
+
+void utils::write_samples(const std::string& path,
+                          const std::complex<float>* const samples,
+                          const uint32_t sample_count)
+{
+    FILE * fh = fopen(path.c_str(), "w");
+    if (! fh) {
+        throw std::runtime_error("Could not open output file '" + path + "'");
+    }
+
+    fwrite(samples, sizeof(samples[0]), sample_count, fh);
+    fclose(fh);
+}
+
+void utils::write_samples_vector(const std::string& path,
+                                 const std::vector<std::complex<float>>& samples)
+{
+    write_samples(path, &samples[0], samples.size());
+}
+
+std::vector<std::complex<float>>
+utils::interpolate(const std::vector<std::complex<float>>& samples, uint32_t rate)
+{
+    std::vector<std::complex<float>> ret(samples.size() * rate, 0);
+    auto * ret_ptr = &ret[0];
+    for (auto idx = decltype(samples.size()){0}; idx < samples.size(); idx++) {
+        *ret_ptr = samples[idx];
+        ret_ptr += rate;
+    }
+    return ret;
+}
+
+std::vector<std::complex<float>>
+utils::filter(const std::vector<std::complex<float>>& samples,
+              const std::vector<float>& taps)
+{
+    gr::filter::kernel::fft_filter_ccf filter(1, taps);
+    std::vector<std::complex<float>> output(samples.size() + (taps.size() * 2));
+    // TODO(16Oct2022): This might be an invalid read.  May need to be samples.size() - taps.size()?
+    const auto count = filter.filter(static_cast<int32_t>(samples.size()), &samples[0], &output[0]);
+
+    // Only the first `count` samples are actually valid.  Trim off the remaining samples
+    output.erase(output.begin() + static_cast<int32_t>(count - taps.size()), output.end());
+    return output;
 }
 
 } /* namespace dji_droneid */

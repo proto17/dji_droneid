@@ -125,6 +125,105 @@ public:
      */
     static std::vector<std::complex<float>> conj_vector(const std::vector<std::complex<float>> & samples);
 
+    /**
+     * Run a cross correlation with the output vector provided
+     * @param samples Vector of complex samples that should be searched through
+     * @param pattern Pattern to search for
+     * @param output Cross correlation scores for each possible shift.  This will need to hold at least
+     *               `sample_count - pattern_sample_count` samples
+     * @param sample_count Number of samples in the sample vector
+     * @param pattern_sample_count Number of samples in the pattern vector
+     * @param needs_conj True if the pattern vector is not already conjugated.  When enabled there is a
+     *                   substantial performance penalty as this is done for each possible shift!
+     * @return Number of valid values in the output vector
+     */
+    static uint32_t xcorr_in_place(const std::complex<float> * samples, const std::complex<float> * pattern,
+                                   std::complex<float> * output,
+                                   uint32_t sample_count, uint32_t pattern_sample_count, bool needs_conj);
+
+    /**
+     * See utils::xcorr_in_place
+     * @param samples Vector of complex samples to search through
+     * @param pattern Vector of complex samples to search for
+     * @param needs_conj True if the pattern vector is not already conjugated
+     * @return Vector of complex samples containing the results of the cross correlation
+     */
+    static std::vector<std::complex<float>> xcorr_vector(const std::vector<std::complex<float>> & samples,
+                                                         const std::vector<std::complex<float>> & pattern,
+                                                         bool needs_conj);
+
+    /**
+     * Compute the magnitude squared of each element in the input samples vector
+     *
+     * Formula is effectively: `pow(samples[idx].real(), 2) + pow(samples[idx].imag(), 2)`
+     * @param samples Vector of complex samples
+     * @param output Vector of floating point values
+     * @param sample_count Number of samples in the input vector
+     */
+    static void mag_squared(const std::complex<float> * samples, float * output, uint32_t sample_count);
+
+    /**
+     * See utils::mag_squared
+     * @param samples Vector of complex samples
+     * @param output Vector of floating point values
+     */
+    static void mag_squared_vector_in_place(const std::vector<std::complex<float>> & samples, std::vector<float> & output);
+
+    /**
+     * See utils::mag_squared
+     * @param samples Vector of complex samples
+     * @return Vector of floating point values
+     */
+    static std::vector<float> mag_squared_vector(const std::vector<std::complex<float>> & samples);
+
+    /**
+     * Calculate the number of samples required to hold a full 9 OFDM symbol burst
+     * @param sample_rate Sample rate (in Hz)
+     * @return See above
+     */
+    static uint32_t get_burst_sample_count(float sample_rate);
+
+    /**
+     * Calculate the magnitude of the provided complex vector
+     *
+     * Formula is effectively: `sqrt(pow(samples[idx].real(), 2) + pow(samples[idx].imag(), 2))`
+     * @param samples Vector of complex samples
+     * @return Vector of floating point values
+     */
+    static std::vector<float> mag_vector(const std::vector<std::complex<float>> & samples);
+
+    /**
+     * Write complex samples to disk
+     * @param path Path to store the complex samples
+     * @param samples Vector of complex samples
+     * @param sample_count Number of elements in the complex vector
+     */
+    static void write_samples(const std::string & path, const std::complex<float> * samples, uint32_t sample_count);
+
+    /**
+     * See utils::write_samples
+     * @param path Path to store the complex samples
+     * @param samples Vector of complex samples
+     */
+    static void write_samples_vector(const std::string & path, const std::vector<std::complex<float>> & samples);
+
+    /**
+     * Interpolate the input samples by the provided rate.  <b>Does not filter!</b>
+     *
+     * Interpolation is accomplished by stuffing `rate - 1` zeros between each sample
+     * @param samples Vector of complex samples
+     * @param rate Interpolation rate (must be > 0)
+     * @return Vector of samples.size() * rate interpolated samples
+     */
+    static std::vector<std::complex<float>> interpolate(const std::vector<std::complex<float>> & samples, uint32_t rate);
+
+    /**
+     * Apply a filter to the provided sample vector
+     * @param samples Vector of complex samples
+     * @param taps Filter taps
+     * @return Vector containing the filtered input samples
+     */
+    static std::vector<std::complex<float>> filter(const std::vector<std::complex<float>> & samples, const std::vector<float> & taps);
 private:
 };
 

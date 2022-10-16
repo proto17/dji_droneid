@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(2b797448fb8ea6ebcdf63ff38c33eb3c)                     */
+/* BINDTOOL_HEADER_FILE_HASH(0806bc36d2dd85628a02810d88f46165)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -108,6 +108,85 @@ void bind_utils(py::module& m)
 
         .def_static(
             "conj_vector", &utils::conj_vector, py::arg("samples"), D(utils, conj_vector))
+
+
+        .def_static("xcorr_in_place",
+                    &utils::xcorr_in_place,
+                    py::arg("samples"),
+                    py::arg("pattern"),
+                    py::arg("output"),
+                    py::arg("sample_count"),
+                    py::arg("pattern_sample_count"),
+                    py::arg("needs_conj"),
+                    D(utils, xcorr_in_place))
+
+
+        .def_static("xcorr_vector",
+                    &utils::xcorr_vector,
+                    py::arg("samples"),
+                    py::arg("pattern"),
+                    py::arg("needs_conj"),
+                    D(utils, xcorr_vector))
+
+
+        .def_static("mag_squared",
+                    &utils::mag_squared,
+                    py::arg("samples"),
+                    py::arg("output"),
+                    py::arg("sample_count"),
+                    D(utils, mag_squared))
+
+
+        .def_static("mag_squared_vector_in_place",
+                    &utils::mag_squared_vector_in_place,
+                    py::arg("samples"),
+                    py::arg("output"),
+                    D(utils, mag_squared_vector_in_place))
+
+
+        .def_static("mag_squared_vector",
+                    &utils::mag_squared_vector,
+                    py::arg("samples"),
+                    D(utils, mag_squared_vector))
+
+
+        .def_static("get_burst_sample_count",
+                    &utils::get_burst_sample_count,
+                    py::arg("sample_rate"),
+                    D(utils, get_burst_sample_count))
+
+
+        .def_static(
+            "mag_vector", &utils::mag_vector, py::arg("samples"), D(utils, mag_vector))
+
+
+        .def_static("write_samples",
+                    &utils::write_samples,
+                    py::arg("path"),
+                    py::arg("samples"),
+                    py::arg("sample_count"),
+                    D(utils, write_samples))
+
+
+        .def_static("write_samples_vector",
+                    &utils::write_samples_vector,
+                    py::arg("path"),
+                    py::arg("samples"),
+                    D(utils, write_samples_vector))
+
+
+        .def_static("interpolate",
+                    &utils::interpolate,
+                    py::arg("samples"),
+                    py::arg("rate"),
+                    D(utils, interpolate))
+
+
+        .def_static("filter",
+                    &utils::filter,
+                    py::arg("samples"),
+                    py::arg("taps"),
+                    D(utils, filter))
 
         ;
 }

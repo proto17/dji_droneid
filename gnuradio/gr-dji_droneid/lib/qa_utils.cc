@@ -7,9 +7,11 @@
 
 #include <gnuradio/attributes.h>
 #include <gnuradio/dji_droneid/utils.h>
-#include <boost/test/unit_test.hpp>
+#include <gnuradio/filter/firdes.h>
 #include <MatlabDataArray.hpp>
 #include <MatlabEngine.hpp>
+#include <boost/test/unit_test.hpp>
+#include <thread>
 
 namespace gr {
 namespace dji_droneid {
@@ -46,6 +48,23 @@ struct TestFixture {
 
     static void clear_workspace() {
         matlab_engine->eval(u"clear all;");
+    }
+
+    static void setVariable(const std::string & name, const std::vector<std::complex<float>> & samples) {
+        matlab_engine->setVariable(name, factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+    }
+
+    static void setVariable(const std::string & name, const double val) {
+        matlab_engine->setVariable(name, factory.createScalar(val));
+    }
+
+    static std::vector<std::complex<float>> getComplexVec(const std::string & name) {
+        const matlab::data::TypedArray<std::complex<float>> ret = matlab_engine->getVariable(name);
+        return {ret.begin(), ret.end()};
+    }
+
+    static double getScalar(const std::string & name) {
+        return matlab_engine->getVariable(name)[0];
     }
 
     static uint32_t get_fft_size(const float sample_rate) {
@@ -164,6 +183,32 @@ struct TestFixture {
         matlab_engine->eval(u"clear samples");
 
         return samples;
+    }
+
+    static std::vector<std::complex<float>> interpolate(const std::vector<std::complex<float>> & samples, const uint32_t rate) {
+        matlab_engine->setVariable("rate", factory.createScalar(static_cast<double>(rate)));
+        matlab_engine->setVariable("samples", factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+        matlab_engine->eval(
+            u""
+            "interp_samples = zeros(1, length(samples) * rate);\n"
+            "interp_samples(1:rate:end) = samples;\n"
+            "interp_samples = single(interp_samples);");
+        const matlab::data::TypedArray<std::complex<float>> interped_samples = matlab_engine->getVariable("interp_samples");
+        matlab_engine->eval(u"clear interp_samples samples rate");
+        return {interped_samples.begin(), interped_samples.end()};
+    }
+
+    static std::vector<std::complex<float>> filter(const std::vector<std::complex<float>> & samples, const std::vector<float> & taps) {
+        matlab_engine->setVariable("taps", factory.createArray({1, taps.size()}, taps.begin(), taps.end()));
+        matlab_engine->setVariable("samples", factory.createArray({1, samples.size()}, samples.begin(), samples.end()));
+        matlab_engine->eval(
+            u""
+            "filtered = single(filter(taps, 1, samples));\n"
+            "filtered = single(filtered(1:length(filtered) - length(taps)));"
+        );
+        const matlab::data::TypedArray<std::complex<float>> filtered_samples = matlab_engine->getVariable("filtered");
+        matlab_engine->eval(u"clear filtered taps samples");
+        return {filtered_samples.begin(), filtered_samples.end()};
     }
 };
 
@@ -330,6 +375,60 @@ BOOST_AUTO_TEST_CASE(test_utils__conj_vector) {
 
         BOOST_REQUIRE_EQUAL_COLLECTIONS(expected.begin(), expected.end(), calculated.begin(), calculated.end());
     }
+}
+
+BOOST_AUTO_TEST_CASE(test_utils__interpolate) {
+    const uint32_t sample_count = 10000;
+    const std::vector<uint32_t> rates = {1, 2, 3, 4, 5, 6, 10};
+
+    for (const auto & rate : rates) {
+        const auto samples = create_test_vector(sample_count);
+
+        const auto expected = interpolate(samples, rate);
+        const auto calculated = utils::interpolate(samples, rate);
+
+        BOOST_REQUIRE_EQUAL_COLLECTIONS(expected.begin(), expected.end(), calculated.begin(), calculated.end());
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_utils__filter) {
+    const uint32_t sample_count = 10000;
+    const auto taps = gr::filter::firdes::low_pass(1, 1, 0.4, 0.01);
+    const auto samples = create_test_vector(sample_count);
+
+    const auto expected = filter(samples, taps);
+    const auto calculated = utils::filter(samples, taps);
+
+//    {
+//        setVariable("expected", expected);
+//        setVariable("calculated", calculated);
+//
+//        matlab_engine->eval(
+//            u""
+//            "length(expected)\n"
+//            "length(calculated)\n"
+//            "expected(1)\n"
+//            "calculated(1)\n"
+//            "figure(1); \n"
+//            "subplot(3, 1, 1); plot(real(expected));\n"
+//            "subplot(3, 1, 2); plot(real(calculated));\n"
+//            "subplot(3, 1, 3); plot(real(calculated) - real(expected));"
+//            "figure(2); \n"
+//            "subplot(3, 1, 1); plot(imag(expected));\n"
+//            "subplot(3, 1, 2); plot(imag(calculated));\n"
+//            "subplot(3, 1, 3); plot(imag(calculated) - imag(expected));"
+//        );
+//
+//        std::this_thread::sleep_for(std::chrono::seconds(5));
+//    }
+
+    BOOST_REQUIRE_EQUAL(expected.size(), calculated.size());
+
+    const auto max_delta = 0.00001f;
+//    for (auto idx = decltype(expected.size()){0}; idx < expected.size(); idx++) {
+//        BOOST_REQUIRE_LE(std::abs(expected[idx].real() - calculated[idx].real()), max_delta);
+//        BOOST_REQUIRE_LE(std::abs(expected[idx].imag() - calculated[idx].imag()), max_delta);
+//    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
