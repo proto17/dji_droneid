@@ -7,14 +7,12 @@ Also, the credit for this work is not mine alone.  I have several people who are
 To that point, huge thanks to the following people / groups:
 - Chair for System Security @ Ruhr-Universität Bochum / CISPA Helmholtz Center for Information Security
 
-![Alt text](Octave.png?raw=true)
+![Title Picture](Octave.png?raw=true)
 
 
 This project aims to demodulate DJI DroneID frames and eventually be able to craft arbitrary DroneID frames that can be sent with an SDR
 
 The `.m` files in this project *should* work with Octave 5.2.0 and MATLAB.  If using Octave, make sure to install the `signal` package
-
-Update(15 April 2022): **The main script (matlab/updated_scripts/process_file.m) is broken for Octave.  I will attempt to address this within the next few days.**
 
 The IQ file used in this example will not be made available publicly as it likely contains GPS information about where the drone was when the recording was taken.  The drone used in testing is the DJI Mini 2 with no modifications.  Recordings were taken with an Ettus B205-mini at a sampling rate of 30.72 MSPS.  The signal of interest is in 2.4 GHz and will show up every 600 ms or so.  It will be 10 MHz wide (15.56 MHz with guard carriers).  
 
@@ -26,14 +24,13 @@ The best use of this module is to collect bursts for processing in MATLAB/Octave
 # How to Process Samples
 You will need to record DroneID bursts with an SDR, save the samples as 32-bit floating point IQ data, and then edit the `matlab/updated_scripts/process_file.m` script to read your file.  If there is a major frequency offset (say you recorded 7 MHz off center) you will need to specify that in the script.
 
-__Currently the C++ program that does Turbo decoding and rate matching is not in the repo.  This will be added in the next week or so__
-
 List of tasks:
  - Identify ZC sequence (done)
  - Detect ZC sequence (done)
  - Coarse frequency offset detection/correction (done)
  - Fine frequency offset detection/correction (skipped)
  - Phase correction (done)
+ - Equalization (done)
  - Symbol extraction (done)
  - Descrambling (done)
  - Turbo Product Code removal (done)
@@ -41,94 +38,77 @@ List of tasks:
  - Profit!
 
 ## Identify ZC Sequence
-There are two Zadoff Chu sequences in each burst.  It's unclear as to the correct parameters to generate these sequences.  It's possible that they will have to be brute forced
+This was completed by brute forcing through all of the possible ZC sequence root indexes for 601 output samples.  I was at a complete standstill until it was suggested that I try all possible combos, and it turns out that it wasn't all that difficult.
 
-Update (9 Apr 2022): Thanks to a tip from someone that's looked at this before I finally have the ZC root values for both symbols 4 and 6.  The tip was to brute force through some number of roots and correlate those roots against the received signal.  So, there is now a script called `brute_force_zc.m` that uses one of the received ZC sequences from the `automatic_detector.m` script to check against.  The recording I am working with is very clean with plenty of SNR and dynamic range (12-bit ADC).  For those that don't want to struggle through it, the roots are 600 for symbol 4, and 147 for symbol 6.  From what I can tell you need to create 601 samples and the middle sample gets set to zero since it maps to the DC subcarrier in an FFT.  Either I am doing something wrong or the first ZC sequence is astoundingly resiliant to frequency offset.  Just for grins I pushed the frequency offset to > 1 MHz off and the normalized cross correlation worked like a champ.
+The tricky bit was that you need to generate 1 plus the number of data carriers (always 600) worth of ZC sequence, zero the center element, map the generated samples onto the center of an FFT (number of bins is based on sample rate), and compute the IFFT.  The resulting time domain samples can be cross correlated against a recording of the same sample rate to find the sequence.
+
+The root indices are
+- 600 for the first ZC sequence
+- 147 for the second ZC sequence
+
 
 ## Detect ZC Sequence
-This has been done by exploiting the fact that the first ZC sequence is symmetric in the time domain (the second might be too) and that a ZC sequence is a CAZAC (constant amplitude, zero autocorrelation).  
-To find the sequence you just need to search through the signal one sample at a time takeing a window of `fft_size` samples, reversing the second half, and cross correlating.
+This is being done using a normalized cross correlation with a golden reference.  The first ZC sequence is generated in MATLAB and that copy is used to find the ZC sequence in the collect.
 
 ## Coarse CFO Detection/Adjustment
-Without knowing the ZC sequence parameters, all that remains are the cyclic prefixes, and cross correlating the ZC sequence halves
-Neither is great as both are spread pretty far apart.  Nothing like the 16 sample IEEE 802.11 preambles that are amazing for coarse CFO.  Perhaps the second ZC sequence can be used?  In the time domain it looks like it repeats itself over and over rapidly.
+Currently using the cyclic prefix of the first OFDM symbol to detect and correct for coarse frequency offset.  
 
-Update: I've skipped this step as my primary goal is to get to bits.  For some reason my logic that uses the cyclic prefix is off by a factor of 9.  For now I have done the correction by hand.
-
-Update (15 April 2022): This is complete.  Currently using the cyclic prefix from the first data symbol to get a coarse estimate
+I don't think this will work should the CFO be very large.  I suspect anything over 1 FFT bin (15 KHz) is going to fail to demodulate
 
 ## Fine CFO Detection/Adjustment
-This likely requires the knowledge of the ZC sequence parameters.  Fine CFO needs a long sequence of samples to work well, and they need to either be known ahead of time, or repeated in the transmission.
-Update: I've skipped this as well.  My corrections from the Coarse CFO have taken care of any fine offset as well.
+It seems that the coarse offset estimate using the cyclic prefix is doing just fine and does not need help from a fine offset adjustment.
 
 ## Phase Correction
-Another one that needs a known sequence in the burst.  The good news is that all of the data carriers are QPSK, so there's only 4 ways to rotate the constellation.
+This ended up being a little more difficult than expected.  If the time that the first sample is plucked from the airwaves does not happen at exactly the right time, then there will be a fractional time offset.  This fractional time offset will show up in the frequency domain as a walking phase offset.  Meaning that each OFDM carrier has an accumulating phase offset left to right.  If the first carrier might have an offset of 0.1 radians, the next 0.2 radians, then 0.3 radians, etc.  Since there are no pilots, the phase offset estimate has to come from the ZC sequences.  But, using the first or second ZC sequences to adjust phase for each OFDM symbol works fine for the OFDM symbols directly to the left and right (in time) of the used ZC sequence, but not so well for the others.  Each other OFDM symbol will have a constellation that is rotating more the further from the ZC sequence it's located.  
 
-Update: I've skipped this too.  Handily the burst I am looking at right now didn't need much in the way of phase adjustments
-
-Update (9 April 2022): In very quick and rough experiments it seems like I can use the cross correlation results from the ZC sequence to directly adjust for absolute phase offsets :D  More experimentation is needed to be sure, but it looks hopeful and sorta makes sense.  I wasn't sure if cross correlation of the ZC sequence would give me frequency or phase information.  I think that autocorrelating the ZC sequence will give me the frequency offset, and cross correlating with the generated sequence will give me phase information (also amplitude if I ever get that far).
-
-Update (15 April 2022): This is now being done with an equalizer that uses the first ZC sequence to get channel taps.  I'm likely not doing it right, but it works for the high SNR environment I'm in :)
+To deal with this, the channel for each ZC sequence is calculated, and the phase difference between those channels is calculated.  This difference divided by 2 is the walking phase offset.  That walking phase offset is then used to adjust each of the other OFDM symbols to get all of the constallations locked properly.
 
 ## Symbol Extraction
 This is super simple and just requires being time and frequency aligned with knowledge of the cyclic prefixes
 
 ## Descrambling
-Rumor is that there is a scrambler in use.  It's not clear to me if the scrambler is before or after FEC, but it will need to be dealt with.  Supposedly it's LTE standard.
-
-Update: the scrambler is definitely before the FEC.  I found a really nice writeup about it at https://www.sharetechnote.com/html/Handbook_LTE_PseudoRandomSequence.html.  The scrambling sequence seems to be made out of two Linear Feedback Shift Registers (LFSRs) combined together.  The intital state of the first LFSR is a constant value, but the second LFSR needs certain parameters that relate to the link.  Unfortunately I don't have those parameters.  The only good news is that is *only* a 31-bit exhaust to brute force.  So ~ 2.5 billion attempts and you're assured success!  In the event that the Turbo decoder parameters are magically known then maybe this won't be so bad.
-
-Update(9 April 2022): I've been told that I should expect that the first OFDM symbol will drop out to all zeros when the correct scrambler is applied.  I'm not sure if that's true just yet.  I tried using the recommended initial value of the second LFSR of 0x12345678 (0b001_0010_0011_0100_0101_0110_0111_1000 since the LFSR is 31 bits long).  Another hint is that I need to collect several frames from different drones.  I'm hoping to find out that the first symbol is a constant.  This should become evident when I can get more frames demodulated.  The issue here is that the current process is very manual.  To solve that issue I am working on a MATLAB/Octave script that will use the newly found ZC sequences to locate the bursts and extract them for me.  There's still the issue of the frequency offsets and absolute phase offsets that will have to be done by hand.  Though I should be able to use the ZC sequence to fix the absolute phase offset.
-Also, I think that if collecting multiple bursts shows that the first symbol doesn't change, then I can use a C++ version of the scrambler generator to brute force finding of the correct initial value (assuming that I don't need to also guess the first intial value...)  It'll take for facking ever, but it's possible.
-
-Update(10 April 2022): The initial value I was told turned out to be 100% correct, and I was having an issue with matrix dimensions.  After changing the code to only look at the first OFDM symbol in the descrambler, everything works out!  Huge thanks to those that helped me through the process!
+Thanks to some kind souls this has been figured out.  In the case of the 9 OFDM symbol drones, the first OFDM symbol gets zero'ed out by the scrambler, and then the scrambler starts over for the remaining 8 OFDM symbols.
 
 ## Turbo Product Code Removal
-It is assumed that the demodulated data contains an LTE standard TPC.  There are libraries that can handle this (hopefully)
-
-A new wrinkle here is that under the Turbo code is going to be "Rate Matching" bits.  I have no idea if that's going to be a standard process that doesn't vary depending on link parameters that aren't already known.
-
-Update (15 April 2022): This is complete.  Code will be uploaded at a later date.
+There is a C++ application in the repository to handle this
 
 ## Deframing
-The underlying data should be in a known DJI format.  If so then this step should be pretty simple
-
-Update (15 April 2022): This is complete.  Code will be uploaded at a later date.
+This is known, and a deframer will be added at a later date
 
 # Known Values
 ## Frequencies
-Look in 2.4 GHz for the Drone ID frames.  Might be best to go into the DJI app and tell the downlink to use 5.8 GHz.  This will keep the downlink (and probably uplink) out of 2.4 GHz.  Drone ID will not move from 2.4 GHz
+Look in 2.4/5.8 GHz for the Drone ID frames
 Some frequencies I have noted thus far:
 - 2.4595 GHz
 - 2.4445 GHz
 - 2.4295 GHz
 - 2.4145 GHz
 - 2.3995 GHz
+- 5.7565 GHz
+- 5.7765 GHz
+- 5.7965 GHz
 
 There might be others, but that's just what I've seen
 
 ## Burst Duration/Interval
 The Drone ID bursts happen ~ every 600 milliseconds
 The frequency varies and I've heard that there is a pattern to it, but cannot validate with my SDR as the bandwidth isn't high enough
-Each burst is 9 OFDM symbols with two symbols using a long cyclic prefix and the others using the short sequence
+Each burst is 9 OFDM symbols with two symbols using a long cyclic prefix and the others using the short sequence (see below for edge case)
 
 ## OFDM Structure
-As mentioned above, there are 9 OFDM symbols.  
+As mentioned above, there are 9 OFDM symbols (see below for edge case)
 The 4th and 6th symbols (1-based) appear to be Zadoff-Chu (ZC) sequences (these are used in LTE and I know for a fact they are present in the uplink signal for Ocusync).  The parameters for the ZC sequences are not known.  I have first hand knowledge that the sequences are almost certainly not following the standard.
 The remaining OFDM symbols carry just a QPSK.  If there are pilots they are either QPSK pilots or a 45 degree offset BPSK.  As pointed out by https://github.com/tmbinc/random/tree/master/dji/ocusync2 the DC carrier appears to always be sitting around 45 degrees with a much smaller amplitude than the data carriers.  Not totally sure what's going on there.
 
-## Open Source LTE Libs
-I have had zero luck with my few attempts at getting open source LTE tools to understand what the DJI Mini 2 is sending out.  My hunch is that this is due to DJI not following the standard to the letter.  But, I know exceedingly little about LTE, so take that for what it's worth.
+### 8 OFDM Symbol Edge Case
+It turns out that some drones don't send the first OFDM symbol.  Instead they skip it and end up with their OFDM symbol 1 being the 9 OFDM symbol cases 2nd OFDM symbol.
+
+Since there's no change to the order of the symbols, and the 9 OFDM symbol case's first OFDM symbol being useless, the scripts in this repo treat all bursts as having 9 OFDM symbols and just don't do anything with the first OFDM symbol.
 
 # Current Questions
-## Descrambler
-- ~~Is there some special sequence that should appear if descrambling is successful?
-- ~~Is there any real point to trying to get the first frame to drop out to all ones or zeros?
-- ~~Is the first LFSR seeded with the LTE standard value?
-- ~~Are there any known bits for the second LFSR that could reduce the search space?
 
-## Turbo Decoder
-- ~~Are there any special parameters needed, or do I just use something like https://github.com/ttsou/turbofec and feed it the raw data from each symbol without any deviation from the LTE spec?
+## Cross Correlation
+MATLAB can do a normalized cross correlation using `xcorr(X, Y, 0, 'normalized')` but it's *crazy* slow.  So I wrote my own function [normalized_xcorr.m](matlab/updated_scripts/normalized_xcorr_fast.m) that is ~ 8x faster than `xcorr` but over 100x slower than the `filter` function that was being used.  If anyone has a better idea on how to do a truly normalized (0.0 - 1.0) cross correlation please let me know.
 
-## Rate Matching
-- ~~I have zero clue how this works, so *any* advice is welcome (I have been told to look at a specific IEEE paper, but don't have an account)
+## Burst Extraction
+Right now the normalized cross correlation mentioned above is used to find the bursts using [process_file.m](matlab/updated_scripts/process_file.m).  Since the cross correlation is so slow, a file that contains tens of millions of samples takes a long time in MATLAB and an even longer time in Octave.  The old method of using the `filter` function was blazing fast, but there was no way to know what the correlation thresholds needed to be without making multiple passes through the file.  Energy detection would probably work, but that falls apart in low SNR conditions.  A normalized autocorrelation would likely be as slow as the cross correlation, which probably rules out autocorrelating for the ZC sequence.  I'd love to hear some ideas to help speed this process up.

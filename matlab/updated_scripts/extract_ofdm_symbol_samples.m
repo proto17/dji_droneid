@@ -27,15 +27,16 @@ function [time_domain, freq_domain] = extract_ofdm_symbol_samples(samples, sampl
     sample_offset = 1;
     for idx=1:length(cp_lengths)
         % Skip the cyclic prefix
-        sample_offset = sample_offset + cp_lengths(idx);
+        symbol = samples(sample_offset:sample_offset + fft_size + cp_lengths(idx) - 1);
+        symbol = symbol(cp_lengths(idx) + 1:end);
 
         % Extract the time domain samples for this OFDM symbol
-        time_domain(idx,:) = samples(sample_offset:sample_offset+fft_size-1);
+        time_domain(idx,:) = symbol;
 
         % Convert the time domain samples into frequency domain
         freq_domain(idx,:) = fftshift(fft(time_domain(idx,:)));
         
-        sample_offset = sample_offset + fft_size;
+        sample_offset = sample_offset + fft_size + cp_lengths(idx);
     end
 end
 
