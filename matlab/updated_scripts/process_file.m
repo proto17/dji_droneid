@@ -20,7 +20,12 @@ end
 % THIS CAN BE COMMENTED OUT IF NEEDED!!!  JUST MAKE SURE TO COMMENT OUT THE `saveas` CALL LATER AS WELL
 mkdir(fullfile(this_script_path, "images"));
 
-turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo');
+if (~ ispc)
+    turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo.exe');
+else
+    turbo_decoder_path = fullfile(this_script_path, filesep, '..', filesep, '..', filesep, 'cpp', filesep, 'remove_turbo');
+end
+
 if (~ isfile(turbo_decoder_path))
     error("Could not find Turbo decoder application at '%s'.  Check that the program has been compiled",...
         turbo_decoder_path);
@@ -318,12 +323,12 @@ for burst_idx=1:size(bursts, 1)
     bits = bitxor(bits, second_scrambler);
 
     % Write the descrambled bits to disk as 8-bit integers
-    handle = fopen("/tmp/bits", "wb");
+    handle = fopen("bits", "wb");
     fwrite(handle, bits, 'int8');
     fclose(handle);
 
     % Run the Turbo decoder and rate matcher
-    [retcode, out] = system(sprintf("%s %s", turbo_decoder_path, "/tmp/bits"));
+    [retcode, out] = system(sprintf("%s %s", turbo_decoder_path, "bits"));
     if (retcode ~= 0)
         warning("Failed to run the final processing step");
     end
